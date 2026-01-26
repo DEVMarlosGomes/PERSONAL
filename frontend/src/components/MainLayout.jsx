@@ -25,7 +25,8 @@ import {
   Upload,
   MessageCircle,
   Sun,
-  Moon
+  Moon,
+  Trophy
 } from "lucide-react";
 
 const personalLinks = [
@@ -33,12 +34,14 @@ const personalLinks = [
   { href: "/alunos", label: "Alunos", icon: Users },
   { href: "/treinos", label: "Treinos", icon: Upload },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
+  { href: "/conquistas", label: "Ranking", icon: Trophy },
   { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
 const studentLinks = [
   { href: "/treino", label: "Meu Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
+  { href: "/conquistas", label: "Conquistas", icon: Trophy },
   { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
