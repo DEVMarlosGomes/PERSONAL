@@ -87,7 +87,7 @@ export default function WorkoutsPage() {
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
-    if (selectedStudent) {
+    if (selectedStudent && selectedStudent !== "none") {
       formData.append("student_id", selectedStudent);
     }
 
