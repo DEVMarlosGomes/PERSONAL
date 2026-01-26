@@ -113,7 +113,7 @@ export default function WorkoutsPage() {
     try {
       await api.delete(`/workouts/${workoutId}`);
       toast.success("Treino removido");
-      loadWorkouts(selectedStudent);
+      loadWorkouts(selectedStudent !== "none" ? selectedStudent : null);
       if (selectedWorkout?.id === workoutId) {
         setSelectedWorkout(null);
       }
