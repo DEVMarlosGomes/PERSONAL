@@ -19,9 +19,10 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
   - `/api/chat/*` - Mensagens entre personal e aluno
   - `/api/exercises/*` - Busca e vídeos de exercícios
   - `/api/reports/*` - Relatórios para PDF
+  - `/api/gamification/*` - Badges, recordes e ranking
 
 ### Frontend (React + Tailwind + Shadcn)
-- **Pages**: Login, Register, Dashboard, Students, Workouts, Progress, Notifications, Chat
+- **Pages**: Login, Register, Dashboard, Students, Workouts, Progress, Notifications, Chat, Gamification
 - **Components**: MainLayout, ExerciseCard, SetTracker, ExerciseVideoModal, ExerciseImageUpload
 
 ## What's Been Implemented
@@ -41,10 +42,20 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
 - Upload de imagem customizada para exercícios
 
 ### Fase 3 - Recursos Avançados (26/01/2026)
-- **Chat**: Comunicação em tempo real entre personal e aluno
-- **Vídeos demonstrativos**: YouTube embeds para 15+ exercícios
-- **Exportação PDF**: Relatório completo do aluno
-- **Modo claro/escuro**: Toggle de tema com persistência
+- Chat em tempo real entre personal e aluno
+- Vídeos demonstrativos (YouTube embeds)
+- Exportação PDF de relatórios
+- Modo claro/escuro com persistência
+
+### Fase 4 - Gamificação (26/01/2026)
+- **9 Badges** disponíveis:
+  - Primeiro Treino, Consistente (3 dias), Dedicado (7 dias), Imparável (30 dias)
+  - Força +10 (aumento de 10kg), Força +25 (aumento de 25kg)
+  - Variado (10 exercícios diferentes)
+  - Veterano (50 treinos), Lenda (100 treinos)
+- **Recordes Pessoais** por exercício
+- **Ranking de Alunos** com sistema de pontos
+- Pontuação: treinos × 10 + sequência × 5 + badges × 20
 
 ## Core Features
 - [x] Autenticação JWT
@@ -60,14 +71,17 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
 - [x] Vídeos demonstrativos
 - [x] Exportação PDF
 - [x] Modo claro/escuro
+- [x] Sistema de badges
+- [x] Recordes pessoais
+- [x] Ranking de alunos
 
 ## Credenciais de Teste
 - **Personal**: test_personal@test.com / test123
 - **Aluno**: joao@test.com / aluno123
 
 ## Next Tasks
-1. Notificações push (PWA)
+1. PWA com notificações push
 2. Sistema de metas por exercício
-3. Histórico de versões de treino com diff
+3. Histórico de versões de treino
 4. App mobile nativo
 
