@@ -1,0 +1,115 @@
+{
+  "typography": {
+    "font_family": {
+      "headings": "Barlow Condensed, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-6xl font-black tracking-tighter uppercase",
+      "h2": "text-3xl md:text-4xl font-bold tracking-tight uppercase",
+      "h3": "text-2xl font-bold tracking-tight",
+      "body_large": "text-lg leading-relaxed",
+      "body_default": "text-base leading-relaxed",
+      "caption": "text-sm text-muted-foreground uppercase tracking-widest"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap');"
+    ]
+  },
+  "colors": {
+    "theme": "dark",
+    "palette": {
+      "background": "#09090B",
+      "foreground": "#FAFAFA",
+      "card": "#18181B",
+      "card_foreground": "#FAFAFA",
+      "popover": "#09090B",
+      "popover_foreground": "#FAFAFA",
+      "primary": "#2563EB",
+      "primary_foreground": "#FAFAFA",
+      "secondary": "#27272A",
+      "secondary_foreground": "#FAFAFA",
+      "muted": "#27272A",
+      "muted_foreground": "#A1A1AA",
+      "accent": "#00F0FF",
+      "accent_foreground": "#000000",
+      "destructive": "#7F1D1D",
+      "destructive_foreground": "#FAFAFA",
+      "border": "#27272A",
+      "input": "#27272A",
+      "ring": "#2563EB"
+    },
+    "gradients": {
+      "primary": "bg-gradient-to-r from-blue-600 to-cyan-500",
+      "dark_overlay": "bg-gradient-to-t from-black/90 via-black/50 to-transparent"
+    }
+  },
+  "visual_enhancers": {
+    "borders": "border border-white/10",
+    "shadows": {
+      "card": "shadow-[0_8px_30px_rgb(0,0,0,0.12)]",
+      "glow": "shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+    },
+    "radius": "rounded-none md:rounded-lg",
+    "glass": "backdrop-blur-xl bg-black/40 border-white/10"
+  },
+  "layout": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "section_spacing": "py-12 md:py-24",
+    "grid_dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+    "grid_mobile": "flex flex-col gap-4"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-white hover:bg-primary/90 font-bold uppercase tracking-wider rounded-sm h-12 px-8 transition-all hover:scale-[1.02]",
+      "secondary": "bg-secondary text-white hover:bg-secondary/80 font-semibold rounded-sm h-12 px-6",
+      "outline": "border-2 border-primary text-primary hover:bg-primary/10 font-bold uppercase tracking-wider rounded-sm h-12 px-8"
+    },
+    "cards": {
+      "dashboard": "bg-card border border-border p-6 rounded-lg hover:border-primary/50 transition-colors",
+      "exercise": "relative overflow-hidden rounded-xl aspect-[4/3] group cursor-pointer border border-white/5"
+    },
+    "inputs": "bg-secondary/50 border-white/10 focus:border-primary h-12 rounded-sm"
+  },
+  "image_urls": {
+    "auth_background": "https://images.unsplash.com/photo-1678967633223-050cf8e1c55c?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "hero_trainer": "https://images.unsplash.com/photo-1738523686578-f18348c8292b?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "student_workout": "https://images.unsplash.com/photo-1614367674345-f414b2be3e5b?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "exercise_squat": "https://images.unsplash.com/photo-1700784795176-7ff886439d79?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "gym_interior": "https://images.unsplash.com/photo-1702997831866-8c22e3d796f9?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "logo_placeholder": "https://images.pexels.com/photos/7089760/pexels-photo-7089760.jpeg"
+  },
+  "instructions_to_main_agent": [
+    "Implement 'Barlow Condensed' for all headings (h1-h3) to give a strong athletic feel.",
+    "Use 'Inter' for all body text and UI elements for maximum readability.",
+    "Force Dark Mode by default. Add 'dark' class to the html or body tag.",
+    "Use the 'Electric Blue' (#00F0FF) sparingly as an accent for progress bars, active states, and primary CTAs.",
+    "For the Student View, prioritize large touch targets (min 44px) and card-based layouts.",
+    "For the Personal Dashboard, use a dense grid layout to show maximum data at a glance.",
+    "Use Recharts for progress graphs, styled with the primary gradient.",
+    "Ensure all images have a dark overlay (bg-black/40) when text is placed over them.",
+    "Use 'sonner' for all toast notifications.",
+    "Add 'data-testid' to all interactive elements."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use 'sonner' for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
