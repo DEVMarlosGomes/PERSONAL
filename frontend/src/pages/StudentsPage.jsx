@@ -124,6 +124,17 @@ export default function StudentsPage() {
     }
   };
 
+  const handleExportPDF = async (studentId) => {
+    try {
+      toast.info("Gerando relatório...");
+      const response = await api.get(`/reports/student/${studentId}`);
+      await generateStudentReport(response.data);
+      toast.success("Relatório gerado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao gerar relatório");
+    }
+  };
+
   const openEditDialog = (student) => {
     setSelectedStudent(student);
     setFormData({
