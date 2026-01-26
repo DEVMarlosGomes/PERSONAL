@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Users, Plus, Search, Mail, Phone, Edit, Trash2, Dumbbell, MoreVertical } from "lucide-react";
+import { Users, Plus, Search, Mail, Phone, Edit, Trash2, Dumbbell, MoreVertical, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import api from "../lib/api";
 import { toast } from "sonner";
+import { generateStudentReport } from "../utils/pdfGenerator";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
