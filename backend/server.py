@@ -493,16 +493,18 @@ async def upload_workout(
             exercises = []
             
             for _, row in day_df.iterrows():
+                exercise_name = str(row.get('Exercício', '')).strip()
                 exercise = {
-                    "name": str(row.get('Exercício', '')).strip(),
+                    "name": exercise_name,
                     "muscle_group": str(row.get('Grupo Muscular', '')).strip() if pd.notna(row.get('Grupo Muscular')) else '',
                     "sets": int(row.get('Séries', 3)) if pd.notna(row.get('Séries')) else 3,
                     "reps": str(row.get('Repetições', '10')).strip(),
                     "weight": str(row.get('Carga', '')).strip() if pd.notna(row.get('Carga')) else None,
                     "notes": str(row.get('Observações', '')).strip() if pd.notna(row.get('Observações')) else None,
-                    "image_url": None,
+                    "image_url": get_exercise_image(exercise_name),  # Auto-assign image
                     "video_url": None,
-                    "description": str(row.get('Descrição', '')).strip() if pd.notna(row.get('Descrição')) else None
+                    "description": str(row.get('Descrição', '')).strip() if pd.notna(row.get('Descrição')) else None,
+                    "rest_time": 90  # Default rest time in seconds
                 }
                 exercises.append(exercise)
             
