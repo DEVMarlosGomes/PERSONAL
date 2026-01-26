@@ -159,7 +159,7 @@ export default function WorkoutsPage() {
                     <SelectValue placeholder="Escolha um aluno (opcional)" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="">Nenhum (apenas preview)</SelectItem>
+                    <SelectItem value="none">Nenhum (apenas preview)</SelectItem>
                     {students.map((student) => (
                       <SelectItem key={student.id} value={student.id}>
                         {student.name}
