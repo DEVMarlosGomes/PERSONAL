@@ -11,6 +11,7 @@ import WorkoutsPage from "./pages/WorkoutsPage";
 import ProgressPage from "./pages/ProgressPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ChatPage from "./pages/ChatPage";
+import GamificationPage from "./pages/GamificationPage";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
