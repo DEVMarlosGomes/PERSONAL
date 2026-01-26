@@ -32,7 +32,7 @@ export default function WorkoutsPage() {
   const fileInputRef = useRef(null);
   const [students, setStudents] = useState([]);
   const [workouts, setWorkouts] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(searchParams.get("student") || "");
+  const [selectedStudent, setSelectedStudent] = useState(searchParams.get("student") || "none");
   const [uploadedWorkout, setUploadedWorkout] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
