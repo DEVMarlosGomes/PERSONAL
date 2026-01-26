@@ -98,6 +98,20 @@ export const MainLayout = ({ children }) => {
 
             {/* Right Section */}
             <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleTheme}
+                data-testid="theme-toggle-btn"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </Button>
+
               {/* Notifications */}
               <Link to="/notificacoes">
                 <Button variant="ghost" size="icon" className="relative" data-testid="notifications-btn">
