@@ -671,6 +671,88 @@ async def update_exercise_image(workout_id: str, update: ExerciseImageUpdate, pe
     
     raise HTTPException(status_code=400, detail="Índice inválido")
 
+@api_router.post("/workouts/{workout_id}/upload-image")
+async def upload_exercise_image(
+    workout_id: str,
+    day_index: int = Form(...),
+    exercise_index: int = Form(...),
+    file: UploadFile = File(...),
+    personal: dict = Depends(get_personal_user)
+):
+    """Upload custom image for an exercise"""
+    workout = await db.workouts.find_one({"id": workout_id, "personal_id": personal["id"]})
+    if not workout:
+        raise HTTPException(status_code=404, detail="Treino não encontrado")
+    
+    # Validate indices
+    days = workout["days"]
+    if day_index >= len(days) or exercise_index >= len(days[day_index]["exercises"]):
+        raise HTTPException(status_code=400, detail="Índice inválido")
+    
+    # Validate file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Apenas imagens são aceitas")
+    
+    # Save file
+    file_ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    file_name = f"{workout_id}_{day_index}_{exercise_index}_{uuid.uuid4().hex[:8]}.{file_ext}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    
+    # Update exercise with new image URL
+    image_url = f"/uploads/{file_name}"
+    days[day_index]["exercises"][exercise_index]["image_url"] = image_url
+    
+    await db.workouts.update_one(
+        {"id": workout_id},
+        {"$set": {"days": days, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Imagem enviada com sucesso", "image_url": image_url}
+
+@api_router.put("/workouts/{workout_id}/exercise-rest-time")
+async def update_exercise_rest_time(
+    workout_id: str,
+    day_index: int,
+    exercise_index: int,
+    rest_time: int,
+    personal: dict = Depends(get_personal_user)
+):
+    """Update rest time for an exercise"""
+    workout = await db.workouts.find_one({"id": workout_id, "personal_id": personal["id"]})
+    if not workout:
+        raise HTTPException(status_code=404, detail="Treino não encontrado")
+    
+    days = workout["days"]
+    if day_index < len(days) and exercise_index < len(days[day_index]["exercises"]):
+        days[day_index]["exercises"][exercise_index]["rest_time"] = rest_time
+        
+        await db.workouts.update_one(
+            {"id": workout_id},
+            {"$set": {"days": days, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"message": "Tempo de descanso atualizado"}
+    
+    raise HTTPException(status_code=400, detail="Índice inválido")
+
+@api_router.get("/exercises/search")
+async def search_exercises(q: str, current_user: dict = Depends(get_current_user)):
+    """Search exercises from the image database"""
+    results = []
+    q_lower = q.lower()
+    
+    for name, image_url in EXERCISE_IMAGES.items():
+        if q_lower in name:
+            results.append({
+                "name": name.title(),
+                "image_url": image_url
+            })
+    
+    return results[:10]  # Limit results
+
 @api_router.delete("/workouts/{workout_id}")
 async def delete_workout(workout_id: str, personal: dict = Depends(get_personal_user)):
     result = await db.workouts.delete_one({"id": workout_id, "personal_id": personal["id"]})
