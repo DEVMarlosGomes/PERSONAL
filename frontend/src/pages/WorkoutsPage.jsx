@@ -43,7 +43,7 @@ export default function WorkoutsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedStudent) {
+    if (selectedStudent && selectedStudent !== "none") {
       loadWorkouts(selectedStudent);
     } else {
       loadWorkouts();
