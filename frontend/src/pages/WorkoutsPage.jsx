@@ -315,26 +315,41 @@ export default function WorkoutsPage() {
                               </TabsTrigger>
                             ))}
                           </TabsList>
-                          {workout.days?.map((day) => (
+                          {workout.days?.map((day, dayIdx) => (
                             <TabsContent key={day.day_name} value={day.day_name}>
                               <div className="space-y-2">
                                 {day.exercises?.map((exercise, idx) => (
                                   <div 
                                     key={idx}
-                                    className="flex items-center justify-between p-3 rounded bg-background/50"
+                                    className="flex items-center justify-between p-3 rounded bg-background/50 group"
                                   >
                                     <div className="flex items-center gap-3">
-                                      {exercise.image_url ? (
-                                        <img 
-                                          src={exercise.image_url} 
-                                          alt={exercise.name}
-                                          className="w-10 h-10 rounded object-cover"
-                                        />
-                                      ) : (
-                                        <div className="w-10 h-10 rounded bg-secondary flex items-center justify-center">
-                                          <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                                        </div>
-                                      )}
+                                      <div className="relative">
+                                        {exercise.image_url ? (
+                                          <img 
+                                            src={exercise.image_url} 
+                                            alt={exercise.name}
+                                            className="w-10 h-10 rounded object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-10 h-10 rounded bg-secondary flex items-center justify-center">
+                                            <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                                          </div>
+                                        )}
+                                        <button
+                                          onClick={() => setImageUploadDialog({
+                                            workoutId: workout.id,
+                                            dayIndex: dayIdx,
+                                            exerciseIndex: idx,
+                                            exerciseName: exercise.name,
+                                            currentImage: exercise.image_url
+                                          })}
+                                          className="absolute -bottom-1 -right-1 p-1 rounded-full bg-primary hover:bg-primary/80 opacity-0 group-hover:opacity-100 transition-opacity"
+                                          data-testid={`edit-image-${dayIdx}-${idx}`}
+                                        >
+                                          <Camera className="w-3 h-3 text-white" />
+                                        </button>
+                                      </div>
                                       <div>
                                         <p className="font-medium">{exercise.name}</p>
                                         <p className="text-xs text-muted-foreground">
@@ -364,6 +379,23 @@ export default function WorkoutsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Image Upload Dialog */}
+        {imageUploadDialog && (
+          <ExerciseImageUpload
+            isOpen={!!imageUploadDialog}
+            onClose={() => setImageUploadDialog(null)}
+            workoutId={imageUploadDialog.workoutId}
+            dayIndex={imageUploadDialog.dayIndex}
+            exerciseIndex={imageUploadDialog.exerciseIndex}
+            exerciseName={imageUploadDialog.exerciseName}
+            currentImage={imageUploadDialog.currentImage}
+            onImageUpdated={(newUrl) => {
+              // Refresh workouts to show new image
+              loadWorkouts(selectedStudent !== "none" ? selectedStudent : null);
+            }}
+          />
+        )}
       </div>
     </MainLayout>
   );
