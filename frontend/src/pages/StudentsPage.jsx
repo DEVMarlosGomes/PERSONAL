@@ -321,6 +321,10 @@ export default function StudentsPage() {
                           <Edit className="w-4 h-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportPDF(student.id)}>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Exportar PDF
+                        </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => setDeleteStudent(student)}
                           className="text-red-400 focus:text-red-400"
