@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { Button } from "../components/ui/button";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
@@ -21,7 +22,10 @@ import {
   Menu,
   User,
   ChevronRight,
-  Upload
+  Upload,
+  MessageCircle,
+  Sun,
+  Moon
 } from "lucide-react";
 
 const personalLinks = [
@@ -29,15 +33,18 @@ const personalLinks = [
   { href: "/alunos", label: "Alunos", icon: Users },
   { href: "/treinos", label: "Treinos", icon: Upload },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
 const studentLinks = [
   { href: "/treino", label: "Meu Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
 export const MainLayout = ({ children }) => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
