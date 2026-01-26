@@ -31,13 +31,85 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'personal-trainer-secret-key-2024')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 
+# Upload directory for exercise images
+UPLOAD_DIR = ROOT_DIR / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+
 app = FastAPI(title="Personal Trainer API")
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
+# Serve uploaded files
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# ==================== EXERCISE IMAGE DATABASE ====================
+# Pre-defined exercise images for common exercises
+EXERCISE_IMAGES = {
+    # Chest
+    "supino reto": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400",
+    "supino inclinado": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400",
+    "supino declinado": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400",
+    "crucifixo": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400",
+    "crossover": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400",
+    "flexão": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400",
+    # Back
+    "puxada": "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400",
+    "puxada frontal": "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400",
+    "remada": "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400",
+    "remada curvada": "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400",
+    "remada baixa": "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400",
+    "pulldown": "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400",
+    # Shoulders
+    "desenvolvimento": "https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=400",
+    "elevação lateral": "https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=400",
+    "elevação frontal": "https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=400",
+    # Biceps
+    "rosca": "https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400",
+    "rosca direta": "https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400",
+    "rosca alternada": "https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400",
+    "rosca martelo": "https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400",
+    "rosca scott": "https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400",
+    # Triceps
+    "tríceps": "https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=400",
+    "tríceps pulley": "https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=400",
+    "tríceps corda": "https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=400",
+    "tríceps testa": "https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=400",
+    "tríceps francês": "https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=400",
+    # Legs
+    "agachamento": "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400",
+    "leg press": "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400",
+    "extensora": "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400",
+    "flexora": "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400",
+    "cadeira extensora": "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400",
+    "cadeira flexora": "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400",
+    "stiff": "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400",
+    "levantamento terra": "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400",
+    "panturrilha": "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400",
+    "gêmeos": "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400",
+    # Abs
+    "abdominal": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
+    "prancha": "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400",
+    "crunch": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
+}
+
+def get_exercise_image(exercise_name: str) -> Optional[str]:
+    """Get image URL for exercise based on name matching"""
+    name_lower = exercise_name.lower().strip()
+    
+    # Direct match
+    if name_lower in EXERCISE_IMAGES:
+        return EXERCISE_IMAGES[name_lower]
+    
+    # Partial match
+    for key, url in EXERCISE_IMAGES.items():
+        if key in name_lower or name_lower in key:
+            return url
+    
+    return None
 
 # ==================== MODELS ====================
 
