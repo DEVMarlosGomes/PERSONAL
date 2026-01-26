@@ -14,13 +14,15 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
   - `/api/auth/*` - Autenticação
   - `/api/students/*` - CRUD de alunos (Personal only)
   - `/api/workouts/*` - Upload XLS e gerenciamento de treinos
+  - `/api/workouts/{id}/upload-image` - Upload de imagem para exercício
   - `/api/progress/*` - Tracking de progresso e evolução
   - `/api/notifications/*` - Sistema de notificações
   - `/api/stats/*` - Estatísticas do dashboard
+  - `/api/exercises/search` - Busca de exercícios
 
 ### Frontend (React + Tailwind + Shadcn)
 - **Pages**: Login, Register, PersonalDashboard, StudentDashboard, StudentsPage, WorkoutsPage, ProgressPage, NotificationsPage
-- **Components**: MainLayout, ExerciseCard, SetTracker
+- **Components**: MainLayout, ExerciseCard, SetTracker (com Timer), ExerciseImageUpload
 
 ## User Personas
 
@@ -28,13 +30,13 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
 - Gerencia múltiplos alunos
 - Cria treinos via upload de planilha XLS/XLSX
 - Acompanha evolução dos alunos
-- Recebe notificações de progresso
+- Adiciona imagens customizadas aos exercícios
 
 ### Aluno
 - Visualiza treino organizado por dias
 - Registra progresso por série (carga + reps)
+- Usa timer de descanso entre séries
 - Acompanha própria evolução via gráficos
-- Usa no celular durante treino
 
 ## Core Requirements (Static)
 - [x] Autenticação JWT
@@ -51,27 +53,22 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
 
 ## What's Been Implemented (26/01/2026)
 
-### Backend
+### Fase 1 - MVP
 - Sistema completo de autenticação JWT
-- CRUD de alunos (criar, listar, editar, remover)
+- CRUD de alunos
 - Upload e parsing de planilhas XLS/XLSX
-- Associação de treino a aluno
-- Registro de progresso por exercício
-- API de evolução para gráficos
-- Sistema de notificações automáticas
-- Estatísticas do dashboard
-
-### Frontend
-- Tela de login e registro (design moderno escuro)
 - Dashboard do Personal com estatísticas
-- Gerenciamento de alunos com modal de criação
-- Upload de treinos com preview
 - Dashboard do aluno com treino por abas (dias)
 - Cards de exercício com imagem
-- Modal de tracking de séries (SetTracker)
+- Modal de tracking de séries
 - Página de evolução com gráficos
-- Página de notificações
-- Navegação responsiva
+- Sistema de notificações
+
+### Fase 2 - Refinamentos (26/01/2026)
+- **Banco de imagens automático**: Exercícios recebem imagens automaticamente baseado no nome
+- **Timer de descanso**: Cronômetro configurável (30s a 3min) com alerta sonoro
+- **Upload de imagem customizada**: Personal pode adicionar imagem própria para exercícios
+- **Tempo de descanso por exercício**: Configuração de rest_time para cada exercício
 
 ## Prioritized Backlog
 
@@ -81,20 +78,21 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
 - [x] Visualização de treino
 - [x] Tracking de progresso
 
-### P1 - Important
-- [ ] Upload de imagens customizadas para exercícios
-- [ ] Integração com API externa de exercícios (ExerciseDB)
-- [ ] Timer de descanso entre séries
-- [ ] Notificações push
+### P1 - Important (Done)
+- [x] Banco de imagens automático para exercícios
+- [x] Timer de descanso entre séries
+- [x] Upload de imagens customizadas
 
 ### P2 - Nice to Have
 - [ ] Vídeos demonstrativos
 - [ ] Chat entre personal e aluno
 - [ ] Exportar relatórios PDF
-- [ ] Tema claro/escuro
+- [ ] Notificações push
+- [ ] Tema claro/escuro toggle
 
 ## Next Tasks
-1. Implementar upload de imagens para exercícios
-2. Adicionar timer de descanso no SetTracker
-3. Integrar API de exercícios para sugestões
-4. Melhorar gráficos de evolução com comparativos
+1. Adicionar vídeos demonstrativos dos exercícios
+2. Implementar chat entre personal e aluno
+3. Criar exportação de relatórios em PDF
+4. Adicionar notificações push
+
