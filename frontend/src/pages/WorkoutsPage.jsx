@@ -22,10 +22,12 @@ import {
   Calendar,
   Trash2,
   Eye,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Camera
 } from "lucide-react";
 import api from "../lib/api";
 import { toast } from "sonner";
+import { ExerciseImageUpload } from "../components/ExerciseImageUpload";
 
 export default function WorkoutsPage() {
   const [searchParams] = useSearchParams();
@@ -37,6 +39,7 @@ export default function WorkoutsPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedWorkout, setSelectedWorkout] = useState(null);
+  const [imageUploadDialog, setImageUploadDialog] = useState(null);
 
   useEffect(() => {
     loadData();
