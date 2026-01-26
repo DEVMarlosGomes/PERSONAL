@@ -9,90 +9,65 @@ Aplicativo web de personal trainer para cliente final com dois perfis bem defini
 
 ### Backend (FastAPI + MongoDB)
 - **Auth**: JWT com bcrypt para senha
-- **Models**: User (Personal/Student), Workout, Progress, Notification
+- **Models**: User, Workout, Progress, Notification, Message
 - **Endpoints**:
   - `/api/auth/*` - Autenticação
-  - `/api/students/*` - CRUD de alunos (Personal only)
+  - `/api/students/*` - CRUD de alunos
   - `/api/workouts/*` - Upload XLS e gerenciamento de treinos
-  - `/api/workouts/{id}/upload-image` - Upload de imagem para exercício
-  - `/api/progress/*` - Tracking de progresso e evolução
-  - `/api/notifications/*` - Sistema de notificações
-  - `/api/stats/*` - Estatísticas do dashboard
-  - `/api/exercises/search` - Busca de exercícios
+  - `/api/progress/*` - Tracking de progresso
+  - `/api/notifications/*` - Notificações
+  - `/api/chat/*` - Mensagens entre personal e aluno
+  - `/api/exercises/*` - Busca e vídeos de exercícios
+  - `/api/reports/*` - Relatórios para PDF
 
 ### Frontend (React + Tailwind + Shadcn)
-- **Pages**: Login, Register, PersonalDashboard, StudentDashboard, StudentsPage, WorkoutsPage, ProgressPage, NotificationsPage
-- **Components**: MainLayout, ExerciseCard, SetTracker (com Timer), ExerciseImageUpload
+- **Pages**: Login, Register, Dashboard, Students, Workouts, Progress, Notifications, Chat
+- **Components**: MainLayout, ExerciseCard, SetTracker, ExerciseVideoModal, ExerciseImageUpload
 
-## User Personas
+## What's Been Implemented
 
-### Personal Trainer
-- Gerencia múltiplos alunos
-- Cria treinos via upload de planilha XLS/XLSX
-- Acompanha evolução dos alunos
-- Adiciona imagens customizadas aos exercícios
-
-### Aluno
-- Visualiza treino organizado por dias
-- Registra progresso por série (carga + reps)
-- Usa timer de descanso entre séries
-- Acompanha própria evolução via gráficos
-
-## Core Requirements (Static)
-- [x] Autenticação JWT
-- [x] Perfis separados (Personal/Aluno)
-- [x] Upload de planilha XLS/XLSX
-- [x] Parsing automático da planilha
-- [x] Visualização de treino por dia
-- [x] Cards de exercício com imagem
-- [x] Tracking de séries/reps/carga
-- [x] Gráficos de evolução
-- [x] Sistema de notificações
-- [x] Histórico de treinos
-- [x] Versionamento de treinos
-
-## What's Been Implemented (26/01/2026)
-
-### Fase 1 - MVP
+### Fase 1 - MVP (26/01/2026)
 - Sistema completo de autenticação JWT
-- CRUD de alunos
-- Upload e parsing de planilhas XLS/XLSX
-- Dashboard do Personal com estatísticas
-- Dashboard do aluno com treino por abas (dias)
-- Cards de exercício com imagem
-- Modal de tracking de séries
-- Página de evolução com gráficos
+- CRUD de alunos e treinos
+- Upload de planilhas XLS/XLSX
+- Dashboard do Personal e Aluno
+- Tracking de séries/reps/carga
+- Gráficos de evolução
 - Sistema de notificações
 
 ### Fase 2 - Refinamentos (26/01/2026)
-- **Banco de imagens automático**: Exercícios recebem imagens automaticamente baseado no nome
-- **Timer de descanso**: Cronômetro configurável (30s a 3min) com alerta sonoro
-- **Upload de imagem customizada**: Personal pode adicionar imagem própria para exercícios
-- **Tempo de descanso por exercício**: Configuração de rest_time para cada exercício
+- Banco de imagens automático (40+ exercícios)
+- Timer de descanso configurável (30s-3min)
+- Upload de imagem customizada para exercícios
 
-## Prioritized Backlog
+### Fase 3 - Recursos Avançados (26/01/2026)
+- **Chat**: Comunicação em tempo real entre personal e aluno
+- **Vídeos demonstrativos**: YouTube embeds para 15+ exercícios
+- **Exportação PDF**: Relatório completo do aluno
+- **Modo claro/escuro**: Toggle de tema com persistência
 
-### P0 - Critical (Done)
-- [x] Auth flow completo
-- [x] Upload de planilha
-- [x] Visualização de treino
-- [x] Tracking de progresso
+## Core Features
+- [x] Autenticação JWT
+- [x] Perfis separados (Personal/Aluno)
+- [x] Upload de planilha XLS/XLSX
+- [x] Visualização de treino por dia
+- [x] Cards de exercício com imagem
+- [x] Tracking de séries/reps/carga
+- [x] Timer de descanso
+- [x] Gráficos de evolução
+- [x] Sistema de notificações
+- [x] Chat entre personal e aluno
+- [x] Vídeos demonstrativos
+- [x] Exportação PDF
+- [x] Modo claro/escuro
 
-### P1 - Important (Done)
-- [x] Banco de imagens automático para exercícios
-- [x] Timer de descanso entre séries
-- [x] Upload de imagens customizadas
-
-### P2 - Nice to Have
-- [ ] Vídeos demonstrativos
-- [ ] Chat entre personal e aluno
-- [ ] Exportar relatórios PDF
-- [ ] Notificações push
-- [ ] Tema claro/escuro toggle
+## Credenciais de Teste
+- **Personal**: test_personal@test.com / test123
+- **Aluno**: joao@test.com / aluno123
 
 ## Next Tasks
-1. Adicionar vídeos demonstrativos dos exercícios
-2. Implementar chat entre personal e aluno
-3. Criar exportação de relatórios em PDF
-4. Adicionar notificações push
+1. Notificações push (PWA)
+2. Sistema de metas por exercício
+3. Histórico de versões de treino com diff
+4. App mobile nativo
 
