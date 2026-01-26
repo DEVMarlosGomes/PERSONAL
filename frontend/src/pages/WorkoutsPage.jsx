@@ -97,7 +97,7 @@ export default function WorkoutsPage() {
       });
       setUploadedWorkout(response.data);
       toast.success(`Treino "${response.data.name}" processado com sucesso!`);
-      loadWorkouts(selectedStudent);
+      loadWorkouts(selectedStudent !== "none" ? selectedStudent : null);
     } catch (error) {
       const message = error.response?.data?.detail || "Erro ao processar arquivo";
       toast.error(message);
