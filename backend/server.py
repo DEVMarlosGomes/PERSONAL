@@ -950,6 +950,265 @@ async def get_student_stats(current_user: dict = Depends(get_current_user)):
         "has_workout": len(workouts) > 0
     }
 
+# ==================== CHAT ====================
+
+class MessageCreate(BaseModel):
+    receiver_id: str
+    content: str
+
+class MessageResponse(BaseModel):
+    id: str
+    sender_id: str
+    sender_name: str
+    receiver_id: str
+    content: str
+    read: bool
+    created_at: str
+
+@api_router.post("/chat/messages", response_model=MessageResponse)
+async def send_message(message: MessageCreate, current_user: dict = Depends(get_current_user)):
+    # Verify receiver exists and is related to sender
+    receiver = await db.users.find_one({"id": message.receiver_id}, {"_id": 0, "password": 0})
+    if not receiver:
+        raise HTTPException(status_code=404, detail="Destinatário não encontrado")
+    
+    # Verify relationship
+    if current_user["role"] == "personal":
+        if receiver.get("personal_id") != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Você só pode enviar mensagens para seus alunos")
+    else:  # student
+        if current_user.get("personal_id") != receiver["id"]:
+            raise HTTPException(status_code=403, detail="Você só pode enviar mensagens para seu personal")
+    
+    message_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    message_doc = {
+        "id": message_id,
+        "sender_id": current_user["id"],
+        "sender_name": current_user["name"],
+        "receiver_id": message.receiver_id,
+        "content": message.content,
+        "read": False,
+        "created_at": now
+    }
+    
+    await db.messages.insert_one(message_doc)
+    
+    # Create notification for receiver
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": message.receiver_id,
+        "title": "Nova mensagem",
+        "message": f"{current_user['name']}: {message.content[:50]}{'...' if len(message.content) > 50 else ''}",
+        "type": "info",
+        "read": False,
+        "created_at": now
+    })
+    
+    return MessageResponse(**message_doc)
+
+@api_router.get("/chat/messages/{user_id}", response_model=List[MessageResponse])
+async def get_messages(user_id: str, current_user: dict = Depends(get_current_user)):
+    # Get messages between current user and specified user
+    messages = await db.messages.find({
+        "$or": [
+            {"sender_id": current_user["id"], "receiver_id": user_id},
+            {"sender_id": user_id, "receiver_id": current_user["id"]}
+        ]
+    }, {"_id": 0}).sort("created_at", 1).to_list(500)
+    
+    # Mark messages as read
+    await db.messages.update_many(
+        {"sender_id": user_id, "receiver_id": current_user["id"], "read": False},
+        {"$set": {"read": True}}
+    )
+    
+    return [MessageResponse(**m) for m in messages]
+
+@api_router.get("/chat/conversations")
+async def get_conversations(current_user: dict = Depends(get_current_user)):
+    """Get list of conversations for current user"""
+    if current_user["role"] == "personal":
+        # Get all students
+        students = await db.users.find(
+            {"personal_id": current_user["id"], "role": "student"},
+            {"_id": 0, "password": 0}
+        ).to_list(100)
+        
+        conversations = []
+        for student in students:
+            # Get last message
+            last_msg = await db.messages.find_one(
+                {"$or": [
+                    {"sender_id": current_user["id"], "receiver_id": student["id"]},
+                    {"sender_id": student["id"], "receiver_id": current_user["id"]}
+                ]},
+                sort=[("created_at", -1)]
+            )
+            
+            # Count unread
+            unread = await db.messages.count_documents({
+                "sender_id": student["id"],
+                "receiver_id": current_user["id"],
+                "read": False
+            })
+            
+            conversations.append({
+                "user_id": student["id"],
+                "user_name": student["name"],
+                "last_message": last_msg["content"] if last_msg else None,
+                "last_message_time": last_msg["created_at"] if last_msg else None,
+                "unread_count": unread
+            })
+        
+        return conversations
+    else:
+        # Student - just return personal
+        personal = await db.users.find_one(
+            {"id": current_user.get("personal_id")},
+            {"_id": 0, "password": 0}
+        )
+        
+        if not personal:
+            return []
+        
+        last_msg = await db.messages.find_one(
+            {"$or": [
+                {"sender_id": current_user["id"], "receiver_id": personal["id"]},
+                {"sender_id": personal["id"], "receiver_id": current_user["id"]}
+            ]},
+            sort=[("created_at", -1)]
+        )
+        
+        unread = await db.messages.count_documents({
+            "sender_id": personal["id"],
+            "receiver_id": current_user["id"],
+            "read": False
+        })
+        
+        return [{
+            "user_id": personal["id"],
+            "user_name": personal["name"],
+            "last_message": last_msg["content"] if last_msg else None,
+            "last_message_time": last_msg["created_at"] if last_msg else None,
+            "unread_count": unread
+        }]
+
+# ==================== EXERCISE VIDEOS ====================
+
+# Pre-defined exercise videos (YouTube embeds)
+EXERCISE_VIDEOS = {
+    "supino reto": "https://www.youtube.com/embed/gRVjAtPip0Y",
+    "supino inclinado": "https://www.youtube.com/embed/jPLdzuHckI8",
+    "puxada frontal": "https://www.youtube.com/embed/CAwf7n6Luuc",
+    "remada curvada": "https://www.youtube.com/embed/kBWAon7ItDw",
+    "agachamento": "https://www.youtube.com/embed/ultWZbUMPL8",
+    "leg press": "https://www.youtube.com/embed/IZxyjW7MPJQ",
+    "rosca direta": "https://www.youtube.com/embed/ykJmrZ5v0Oo",
+    "tríceps pulley": "https://www.youtube.com/embed/2-LAMcpzODU",
+    "desenvolvimento": "https://www.youtube.com/embed/qEwKCR5JCog",
+    "elevação lateral": "https://www.youtube.com/embed/3VcKaXpzqRo",
+    "extensora": "https://www.youtube.com/embed/YyvSfVjQeL0",
+    "flexora": "https://www.youtube.com/embed/1Tq3QdYUuHs",
+    "stiff": "https://www.youtube.com/embed/1uDiW5--rAE",
+    "levantamento terra": "https://www.youtube.com/embed/op9kVnSso6Q",
+    "abdominal": "https://www.youtube.com/embed/Xyd_fa5zoEU",
+    "prancha": "https://www.youtube.com/embed/ASdvN_XEl_c",
+}
+
+@api_router.get("/exercises/video/{exercise_name}")
+async def get_exercise_video(exercise_name: str):
+    """Get video URL for exercise"""
+    name_lower = exercise_name.lower().strip()
+    
+    # Direct match
+    if name_lower in EXERCISE_VIDEOS:
+        return {"video_url": EXERCISE_VIDEOS[name_lower]}
+    
+    # Partial match
+    for key, url in EXERCISE_VIDEOS.items():
+        if key in name_lower or name_lower in key:
+            return {"video_url": url}
+    
+    return {"video_url": None}
+
+@api_router.put("/workouts/{workout_id}/exercise-video")
+async def update_exercise_video(
+    workout_id: str,
+    day_index: int,
+    exercise_index: int,
+    video_url: str,
+    personal: dict = Depends(get_personal_user)
+):
+    """Update video URL for an exercise"""
+    workout = await db.workouts.find_one({"id": workout_id, "personal_id": personal["id"]})
+    if not workout:
+        raise HTTPException(status_code=404, detail="Treino não encontrado")
+    
+    days = workout["days"]
+    if day_index < len(days) and exercise_index < len(days[day_index]["exercises"]):
+        days[day_index]["exercises"][exercise_index]["video_url"] = video_url
+        
+        await db.workouts.update_one(
+            {"id": workout_id},
+            {"$set": {"days": days, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"message": "Vídeo atualizado"}
+    
+    raise HTTPException(status_code=400, detail="Índice inválido")
+
+# ==================== PDF EXPORT ====================
+
+@api_router.get("/reports/student/{student_id}")
+async def get_student_report(student_id: str, personal: dict = Depends(get_personal_user)):
+    """Get student data for PDF report generation"""
+    student = await db.users.find_one(
+        {"id": student_id, "personal_id": personal["id"], "role": "student"},
+        {"_id": 0, "password": 0}
+    )
+    if not student:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    
+    # Get workouts
+    workouts = await db.workouts.find(
+        {"student_id": student_id, "archived": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(10)
+    
+    # Get progress
+    progress = await db.progress.find(
+        {"student_id": student_id},
+        {"_id": 0}
+    ).sort("logged_at", -1).to_list(100)
+    
+    # Calculate stats
+    total_workouts = len(progress)
+    exercises_done = len(set(p["exercise_name"] for p in progress))
+    
+    # Get evolution by exercise
+    evolution = {}
+    for p in progress:
+        ex_name = p["exercise_name"]
+        if ex_name not in evolution:
+            evolution[ex_name] = []
+        if p["sets_completed"]:
+            max_weight = max((s.get("weight", 0) for s in p["sets_completed"]), default=0)
+            evolution[ex_name].append({
+                "date": p["logged_at"][:10],
+                "weight": max_weight
+            })
+    
+    return {
+        "student": student,
+        "workouts": workouts,
+        "progress_count": total_workouts,
+        "exercises_count": exercises_done,
+        "evolution": evolution,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
 # ==================== ROOT ====================
 
 @api_router.get("/")
