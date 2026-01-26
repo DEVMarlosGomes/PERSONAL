@@ -1209,6 +1209,265 @@ async def get_student_report(student_id: str, personal: dict = Depends(get_perso
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
+# ==================== GAMIFICATION ====================
+
+# Badge definitions
+BADGES = {
+    "first_workout": {
+        "id": "first_workout",
+        "name": "Primeiro Treino",
+        "description": "Completou seu primeiro treino",
+        "icon": "trophy",
+        "color": "yellow"
+    },
+    "streak_3": {
+        "id": "streak_3",
+        "name": "Consistente",
+        "description": "3 dias seguidos de treino",
+        "icon": "flame",
+        "color": "orange"
+    },
+    "streak_7": {
+        "id": "streak_7",
+        "name": "Dedicado",
+        "description": "7 dias seguidos de treino",
+        "icon": "fire",
+        "color": "red"
+    },
+    "streak_30": {
+        "id": "streak_30",
+        "name": "Imparável",
+        "description": "30 dias seguidos de treino",
+        "icon": "zap",
+        "color": "purple"
+    },
+    "weight_up_10": {
+        "id": "weight_up_10",
+        "name": "Força +10",
+        "description": "Aumentou 10kg em um exercício",
+        "icon": "trending-up",
+        "color": "green"
+    },
+    "weight_up_25": {
+        "id": "weight_up_25",
+        "name": "Força +25",
+        "description": "Aumentou 25kg em um exercício",
+        "icon": "award",
+        "color": "blue"
+    },
+    "exercises_10": {
+        "id": "exercises_10",
+        "name": "Variado",
+        "description": "Registrou progresso em 10 exercícios diferentes",
+        "icon": "grid",
+        "color": "cyan"
+    },
+    "workouts_50": {
+        "id": "workouts_50",
+        "name": "Veterano",
+        "description": "50 treinos registrados",
+        "icon": "medal",
+        "color": "gold"
+    },
+    "workouts_100": {
+        "id": "workouts_100",
+        "name": "Lenda",
+        "description": "100 treinos registrados",
+        "icon": "crown",
+        "color": "platinum"
+    }
+}
+
+async def calculate_badges(student_id: str) -> list:
+    """Calculate which badges a student has earned"""
+    earned_badges = []
+    
+    # Get all progress for student
+    progress_list = await db.progress.find(
+        {"student_id": student_id},
+        {"_id": 0}
+    ).sort("logged_at", 1).to_list(1000)
+    
+    if not progress_list:
+        return earned_badges
+    
+    # First workout badge
+    earned_badges.append(BADGES["first_workout"])
+    
+    # Count total workouts
+    total_workouts = len(progress_list)
+    if total_workouts >= 50:
+        earned_badges.append(BADGES["workouts_50"])
+    if total_workouts >= 100:
+        earned_badges.append(BADGES["workouts_100"])
+    
+    # Count unique exercises
+    unique_exercises = len(set(p["exercise_name"] for p in progress_list))
+    if unique_exercises >= 10:
+        earned_badges.append(BADGES["exercises_10"])
+    
+    # Calculate streak
+    dates = sorted(set(p["logged_at"][:10] for p in progress_list))
+    max_streak = 1
+    current_streak = 1
+    for i in range(1, len(dates)):
+        prev_date = datetime.fromisoformat(dates[i-1])
+        curr_date = datetime.fromisoformat(dates[i])
+        if (curr_date - prev_date).days == 1:
+            current_streak += 1
+            max_streak = max(max_streak, current_streak)
+        else:
+            current_streak = 1
+    
+    if max_streak >= 3:
+        earned_badges.append(BADGES["streak_3"])
+    if max_streak >= 7:
+        earned_badges.append(BADGES["streak_7"])
+    if max_streak >= 30:
+        earned_badges.append(BADGES["streak_30"])
+    
+    # Calculate weight improvements per exercise
+    exercise_progress = {}
+    for p in progress_list:
+        ex_name = p["exercise_name"]
+        if p["sets_completed"]:
+            max_weight = max((s.get("weight", 0) for s in p["sets_completed"]), default=0)
+            if ex_name not in exercise_progress:
+                exercise_progress[ex_name] = {"first": max_weight, "last": max_weight}
+            else:
+                exercise_progress[ex_name]["last"] = max_weight
+    
+    # Check for weight improvements
+    max_improvement = 0
+    for ex_name, data in exercise_progress.items():
+        improvement = data["last"] - data["first"]
+        max_improvement = max(max_improvement, improvement)
+    
+    if max_improvement >= 10:
+        earned_badges.append(BADGES["weight_up_10"])
+    if max_improvement >= 25:
+        earned_badges.append(BADGES["weight_up_25"])
+    
+    return earned_badges
+
+async def calculate_records(student_id: str) -> dict:
+    """Calculate personal records for a student"""
+    progress_list = await db.progress.find(
+        {"student_id": student_id},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    records = {}
+    for p in progress_list:
+        ex_name = p["exercise_name"]
+        if p["sets_completed"]:
+            max_weight = max((s.get("weight", 0) for s in p["sets_completed"]), default=0)
+            max_reps = max((s.get("reps", 0) for s in p["sets_completed"]), default=0)
+            
+            if ex_name not in records or max_weight > records[ex_name]["weight"]:
+                records[ex_name] = {
+                    "weight": max_weight,
+                    "reps": max_reps,
+                    "date": p["logged_at"][:10]
+                }
+    
+    return records
+
+@api_router.get("/gamification/badges")
+async def get_badges(current_user: dict = Depends(get_current_user)):
+    """Get badges for current student"""
+    if current_user["role"] != "student":
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    badges = await calculate_badges(current_user["id"])
+    return {
+        "earned": badges,
+        "total_available": len(BADGES),
+        "earned_count": len(badges)
+    }
+
+@api_router.get("/gamification/records")
+async def get_records(current_user: dict = Depends(get_current_user)):
+    """Get personal records for current student"""
+    if current_user["role"] != "student":
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    records = await calculate_records(current_user["id"])
+    return records
+
+@api_router.get("/gamification/ranking")
+async def get_ranking(personal: dict = Depends(get_personal_user)):
+    """Get ranking of students for a personal trainer"""
+    students = await db.users.find(
+        {"personal_id": personal["id"], "role": "student"},
+        {"_id": 0, "password": 0}
+    ).to_list(100)
+    
+    ranking = []
+    for student in students:
+        # Get progress count
+        progress_count = await db.progress.count_documents({"student_id": student["id"]})
+        
+        # Calculate streak
+        progress_list = await db.progress.find(
+            {"student_id": student["id"]},
+            {"logged_at": 1}
+        ).sort("logged_at", -1).to_list(100)
+        
+        streak = 0
+        if progress_list:
+            dates = sorted(set(p["logged_at"][:10] for p in progress_list), reverse=True)
+            today = datetime.now(timezone.utc).date()
+            
+            for i, date_str in enumerate(dates):
+                check_date = today - timedelta(days=i)
+                if date_str == check_date.isoformat():
+                    streak += 1
+                else:
+                    break
+        
+        # Get badges count
+        badges = await calculate_badges(student["id"])
+        
+        ranking.append({
+            "student_id": student["id"],
+            "student_name": student["name"],
+            "progress_count": progress_count,
+            "streak": streak,
+            "badges_count": len(badges),
+            "score": progress_count * 10 + streak * 5 + len(badges) * 20
+        })
+    
+    # Sort by score descending
+    ranking.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Add rank position
+    for i, r in enumerate(ranking):
+        r["rank"] = i + 1
+    
+    return ranking
+
+@api_router.get("/gamification/student/{student_id}")
+async def get_student_gamification(student_id: str, personal: dict = Depends(get_personal_user)):
+    """Get gamification data for a specific student (personal view)"""
+    student = await db.users.find_one(
+        {"id": student_id, "personal_id": personal["id"], "role": "student"},
+        {"_id": 0, "password": 0}
+    )
+    if not student:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    
+    badges = await calculate_badges(student_id)
+    records = await calculate_records(student_id)
+    
+    return {
+        "student": student,
+        "badges": badges,
+        "records": records,
+        "badges_count": len(badges),
+        "total_badges": len(BADGES)
+    }
+
 # ==================== ROOT ====================
 
 @api_router.get("/")
