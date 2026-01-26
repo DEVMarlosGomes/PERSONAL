@@ -105,6 +105,11 @@ function AppRoutes() {
           <ChatPage />
         </ProtectedRoute>
       } />
+      <Route path="/conquistas" element={
+        <ProtectedRoute>
+          <GamificationPage />
+        </ProtectedRoute>
+      } />
 
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/login" replace />} />
