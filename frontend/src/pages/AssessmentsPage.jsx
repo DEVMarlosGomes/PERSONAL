@@ -228,14 +228,15 @@ export default function AssessmentsPage() {
                   + Avaliação
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="bg-card border-border max-w-3xl">
                 <DialogHeader>
                   <DialogTitle className="text-xl font-bold uppercase">Nova Avaliação</DialogTitle>
                   <DialogDescription>
                     Registre os dados da avaliação física
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <DialogBody>
+                <form id="assessment-form" onSubmit={handleSubmit} className="space-y-6 py-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Tipo de Avaliação</Label>
