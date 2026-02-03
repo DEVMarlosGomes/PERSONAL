@@ -221,7 +221,7 @@ export const MainLayout = ({ children }) => {
                       </div>
 
                       {/* Nav Links */}
-                      <NavLinks mobile />
+                      <MobileNavLinks />
 
                       {/* Notifications */}
                       <Link
