@@ -76,27 +76,55 @@ export const MainLayout = ({ children }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const links = user?.role === "personal" ? personalLinks : studentLinks;
+  // Links completos para menu mobile/sidebar
+  const allLinks = user?.role === "personal" ? personalLinks : studentLinks;
+  // Links principais para navbar horizontal (desktop)
+  const mainLinks = user?.role === "personal" ? personalMainLinks : studentMainLinks;
 
-  const NavLinks = ({ mobile = false }) => (
-    <nav className={`flex ${mobile ? "flex-col" : "items-center gap-1"}`}>
-      {links.map((link) => {
+  // NavLinks para desktop (apenas principais)
+  const DesktopNavLinks = () => (
+    <nav className="flex items-center gap-1">
+      {mainLinks.map((link) => {
         const isActive = location.pathname === link.href;
         return (
           <Link
             key={link.href}
             to={link.href}
-            onClick={() => mobile && setMobileMenuOpen(false)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
               isActive
                 ? "bg-primary text-white font-semibold"
                 : "text-muted-foreground hover:text-white hover:bg-secondary/50"
-            } ${mobile ? "w-full" : ""}`}
+            }`}
             data-testid={`nav-${link.label.toLowerCase().replace(" ", "-")}`}
           >
             <link.icon className="w-4 h-4" />
             {link.label}
-            {mobile && isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  // NavLinks para mobile (todos os links)
+  const MobileNavLinks = () => (
+    <nav className="flex flex-col">
+      {allLinks.map((link) => {
+        const isActive = location.pathname === link.href;
+        return (
+          <Link
+            key={link.href}
+            to={link.href}
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive
+                ? "bg-primary text-white font-semibold"
+                : "text-muted-foreground hover:text-white hover:bg-secondary/50"
+            }`}
+            data-testid={`mobile-nav-${link.label.toLowerCase().replace(" ", "-")}`}
+          >
+            <link.icon className="w-5 h-5" />
+            {link.label}
+            {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
           </Link>
         );
       })}
