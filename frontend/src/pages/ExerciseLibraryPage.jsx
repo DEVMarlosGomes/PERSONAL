@@ -152,7 +152,8 @@ export default function ExerciseLibraryPage() {
                   Adicione um exercício personalizado à biblioteca
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <DialogBody>
+              <form id="exercise-form" onSubmit={handleSubmit} className="space-y-4 py-2">
                 <div className="space-y-2">
                   <Label>Nome *</Label>
                   <Input
