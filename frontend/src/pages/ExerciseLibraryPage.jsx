@@ -212,16 +212,17 @@ export default function ExerciseLibraryPage() {
                     placeholder="https://..."
                   />
                 </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      "Adicionar Exercício"
-                    )}
-                  </Button>
-                </DialogFooter>
               </form>
+              </DialogBody>
+              <DialogFooter>
+                <Button type="submit" form="exercise-form" disabled={submitting}>
+                  {submitting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "Adicionar Exercício"
+                  )}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
