@@ -117,6 +117,11 @@ function AppRoutes() {
           <ProgressPage />
         </ProtectedRoute>
       } />
+      <Route path="/minhas-avaliacoes" element={
+        <ProtectedRoute allowedRoles={["student"]}>
+          <AssessmentsPage />
+        </ProtectedRoute>
+      } />
 
       {/* Shared Routes */}
       <Route path="/notificacoes" element={
