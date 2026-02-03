@@ -85,6 +85,26 @@ function AppRoutes() {
           <ProgressPage />
         </ProtectedRoute>
       } />
+      <Route path="/avaliacoes" element={
+        <ProtectedRoute allowedRoles={["personal"]}>
+          <AssessmentsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/biblioteca" element={
+        <ProtectedRoute allowedRoles={["personal"]}>
+          <ExerciseLibraryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/financeiro" element={
+        <ProtectedRoute allowedRoles={["personal"]}>
+          <FinancialPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/rotinas" element={
+        <ProtectedRoute allowedRoles={["personal"]}>
+          <RoutinesPage />
+        </ProtectedRoute>
+      } />
 
       {/* Student Routes */}
       <Route path="/treino" element={
