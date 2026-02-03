@@ -1073,7 +1073,10 @@ async def create_payment(payment: FinancialPaymentCreate, personal: dict = Depen
     }
     
     await db.payments.insert_one(payment_doc)
-    return {"id": payment_id, **payment_doc}
+    
+    # Remove _id from response
+    payment_doc.pop("_id", None)
+    return payment_doc
 
 @api_router.get("/financial/payments")
 async def list_payments(
