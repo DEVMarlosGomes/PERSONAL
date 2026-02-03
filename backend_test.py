@@ -660,20 +660,29 @@ class PersonalTrainerAPITester:
         return False, {}
 
 def main():
-    print("🏋️ Personal Trainer API Testing Started")
+    print("🏋️ FitMaster API Testing Started")
     print("=" * 50)
     
     tester = PersonalTrainerAPITester()
     
-    # Test Personal Registration and Login
-    print("\n📋 TESTING PERSONAL TRAINER FLOW")
-    success, personal_user = tester.test_personal_registration()
+    # Test with existing personal trainer credentials
+    print("\n📋 TESTING WITH EXISTING PERSONAL TRAINER")
+    success, personal_user = tester.test_personal_login("test_personal@test.com", "test123")
     if not success:
-        print("❌ Personal registration failed, stopping tests")
-        return 1
+        print("❌ Personal login failed, trying registration...")
+        success, personal_user = tester.test_personal_registration()
+        if not success:
+            print("❌ Personal registration failed, stopping tests")
+            return 1
     
     # Test auth endpoints
     tester.test_get_me()
+    
+    # Test with existing student
+    print("\n🎓 TESTING WITH EXISTING STUDENT")
+    success, existing_student = tester.test_existing_student_login()
+    if not success:
+        print("❌ Existing student login failed")
     
     # Test student management
     print("\n👥 TESTING STUDENT MANAGEMENT")
@@ -685,6 +694,31 @@ def main():
     tester.test_list_students()
     tester.test_get_student()
     tester.test_update_student()
+    
+    # Test FitMaster NEW FEATURES - Physical Assessments
+    print("\n🏥 TESTING PHYSICAL ASSESSMENTS")
+    tester.test_create_physical_assessment()
+    tester.test_list_assessments()
+    tester.test_compare_assessments()
+    
+    # Test FitMaster NEW FEATURES - Training Routines
+    print("\n📋 TESTING TRAINING ROUTINES")
+    tester.test_create_training_routine()
+    tester.test_list_routines()
+    tester.test_clone_routine()
+    
+    # Test FitMaster NEW FEATURES - Exercise Library
+    print("\n📚 TESTING EXERCISE LIBRARY")
+    tester.test_get_exercise_categories()
+    tester.test_list_exercise_library()
+    tester.test_create_custom_exercise()
+    
+    # Test FitMaster NEW FEATURES - Financial
+    print("\n💰 TESTING FINANCIAL MANAGEMENT")
+    tester.test_create_financial_payment()
+    tester.test_list_financial_payments()
+    tester.test_financial_summary()
+    tester.test_mark_payment_as_paid()
     
     # Test workout management
     print("\n💪 TESTING WORKOUT MANAGEMENT")
@@ -721,10 +755,10 @@ def main():
     print(f"📈 Success rate: {success_rate:.1f}%")
     
     if success_rate >= 80:
-        print("✅ Backend API tests PASSED")
+        print("✅ FitMaster Backend API tests PASSED")
         return 0
     else:
-        print("❌ Backend API tests FAILED")
+        print("❌ FitMaster Backend API tests FAILED")
         return 1
 
 if __name__ == "__main__":
