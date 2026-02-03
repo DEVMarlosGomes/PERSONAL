@@ -193,131 +193,134 @@ export default function StudentsPage() {
                 Novo Aluno
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-border max-h-[85vh] overflow-hidden flex flex-col">
-              <DialogHeader className="flex-shrink-0">
+            <DialogContent className="bg-card border-border">
+              <DialogHeader>
                 <DialogTitle className="text-xl font-bold uppercase">Cadastrar Aluno</DialogTitle>
                 <DialogDescription>
                   Preencha os dados do novo aluno
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleAddStudent} className="space-y-4 overflow-y-auto flex-1 pr-2">
-                <div className="space-y-2">
-                  <Label htmlFor="add-name">Nome *</Label>
-                  <Input
-                    id="add-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nome completo"
-                    className="bg-secondary/50 border-white/10"
-                    data-testid="add-student-name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-email">Email *</Label>
-                  <Input
-                    id="add-email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="email@exemplo.com"
-                    className="bg-secondary/50 border-white/10"
-                    data-testid="add-student-email"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-password">Senha *</Label>
-                  <Input
-                    id="add-password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Senha de acesso"
-                    className="bg-secondary/50 border-white/10"
-                    data-testid="add-student-password"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-phone">Telefone</Label>
-                  <Input
-                    id="add-phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="(00) 00000-0000"
-                    className="bg-secondary/50 border-white/10"
-                    data-testid="add-student-phone"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <DialogBody>
+                <form id="add-student-form" onSubmit={handleAddStudent} className="space-y-4 py-2">
                   <div className="space-y-2">
-                    <Label htmlFor="add-birth_date">Data de Nascimento</Label>
+                    <Label htmlFor="add-name">Nome *</Label>
                     <Input
-                      id="add-birth_date"
-                      type="date"
-                      value={formData.birth_date}
-                      onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                      id="add-name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Nome completo"
+                      className="bg-secondary/50 border-white/10"
+                      data-testid="add-student-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-email">Email *</Label>
+                    <Input
+                      id="add-email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="email@exemplo.com"
+                      className="bg-secondary/50 border-white/10"
+                      data-testid="add-student-email"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-password">Senha *</Label>
+                    <Input
+                      id="add-password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Senha de acesso"
+                      className="bg-secondary/50 border-white/10"
+                      data-testid="add-student-password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-phone">Telefone</Label>
+                    <Input
+                      id="add-phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                      className="bg-secondary/50 border-white/10"
+                      data-testid="add-student-phone"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="add-birth_date">Data de Nascimento</Label>
+                      <Input
+                        id="add-birth_date"
+                        type="date"
+                        value={formData.birth_date}
+                        onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                        className="bg-secondary/50 border-white/10"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="add-gender">Gênero</Label>
+                      <select
+                        id="add-gender"
+                        value={formData.gender}
+                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-white/10 bg-secondary/50 px-3 py-2 text-sm"
+                      >
+                        <option value="">Selecione</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                        <option value="Outro">Outro</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-objective">Objetivo</Label>
+                    <select
+                      id="add-objective"
+                      value={formData.objective}
+                      onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
+                      className="flex h-10 w-full rounded-md border border-white/10 bg-secondary/50 px-3 py-2 text-sm"
+                    >
+                      <option value="">Selecione o objetivo</option>
+                      <option value="Emagrecimento">Emagrecimento</option>
+                      <option value="Hipertrofia">Hipertrofia</option>
+                      <option value="Condicionamento">Condicionamento</option>
+                      <option value="Força">Força</option>
+                      <option value="Resistência">Resistência</option>
+                      <option value="Reabilitação">Reabilitação</option>
+                      <option value="Qualidade de vida">Qualidade de vida</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-medical">Restrições Médicas</Label>
+                    <Textarea
+                      id="add-medical"
+                      value={formData.medical_restrictions}
+                      onChange={(e) => setFormData({ ...formData, medical_restrictions: e.target.value })}
+                      placeholder="Lesões, problemas cardíacos, alergias..."
                       className="bg-secondary/50 border-white/10"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="add-gender">Gênero</Label>
-                    <select
-                      id="add-gender"
-                      value={formData.gender}
-                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                      className="flex h-10 w-full rounded-md border border-white/10 bg-secondary/50 px-3 py-2 text-sm"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                    </select>
+                    <Label htmlFor="add-notes">Observações</Label>
+                    <Textarea
+                      id="add-notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Informações adicionais sobre o aluno"
+                      className="bg-secondary/50 border-white/10"
+                      data-testid="add-student-notes"
+                    />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-objective">Objetivo</Label>
-                  <select
-                    id="add-objective"
-                    value={formData.objective}
-                    onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-secondary/50 px-3 py-2 text-sm"
-                  >
-                    <option value="">Selecione o objetivo</option>
-                    <option value="Emagrecimento">Emagrecimento</option>
-                    <option value="Hipertrofia">Hipertrofia</option>
-                    <option value="Condicionamento">Condicionamento</option>
-                    <option value="Força">Força</option>
-                    <option value="Resistência">Resistência</option>
-                    <option value="Reabilitação">Reabilitação</option>
-                    <option value="Qualidade de vida">Qualidade de vida</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-medical">Restrições Médicas</Label>
-                  <Textarea
-                    id="add-medical"
-                    value={formData.medical_restrictions}
-                    onChange={(e) => setFormData({ ...formData, medical_restrictions: e.target.value })}
-                    placeholder="Lesões, problemas cardíacos, alergias..."
-                    className="bg-secondary/50 border-white/10"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-notes">Observações</Label>
-                  <Textarea
-                    id="add-notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Informações adicionais sobre o aluno"
-                    className="bg-secondary/50 border-white/10"
-                    data-testid="add-student-notes"
-                  />
-                </div>
-                <DialogFooter className="pt-4 border-t border-border mt-4 flex-shrink-0">
-                  <Button type="submit" disabled={submitting} data-testid="submit-add-student">
-                    {submitting ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      "Cadastrar"
+                </form>
+              </DialogBody>
+              <DialogFooter>
+                <Button type="submit" form="add-student-form" disabled={submitting} data-testid="submit-add-student">
+                  {submitting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "Cadastrar"
                     )}
                   </Button>
                 </DialogFooter>
