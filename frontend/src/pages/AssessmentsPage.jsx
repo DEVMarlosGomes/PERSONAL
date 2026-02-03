@@ -499,17 +499,17 @@ export default function AssessmentsPage() {
                       placeholder="Anotações sobre a avaliação..."
                     />
                   </div>
-
-                  <DialogFooter>
-                    <Button type="submit" disabled={submitting}>
-                      {submitting ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        "Salvar Avaliação"
-                      )}
-                    </Button>
-                  </DialogFooter>
                 </form>
+                </DialogBody>
+                <DialogFooter>
+                  <Button type="submit" form="assessment-form" disabled={submitting}>
+                    {submitting ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "Salvar Avaliação"
+                    )}
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
