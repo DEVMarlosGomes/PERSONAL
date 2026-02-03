@@ -1502,17 +1502,25 @@ async def list_workouts(
     
     workouts = await db.workouts.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     
-    return [WorkoutResponse(
-        id=w["id"],
-        name=w["name"],
-        student_id=w["student_id"],
-        personal_id=w["personal_id"],
-        routine_id=w.get("routine_id"),
-        days=w["days"],
-        created_at=w["created_at"],
-        updated_at=w["updated_at"],
-        version=w.get("version", 1)
-    ) for w in workouts]
+    result = []
+    for w in workouts:
+        try:
+            result.append(WorkoutResponse(
+                id=w["id"],
+                name=w["name"],
+                student_id=w.get("student_id") or "",
+                personal_id=w["personal_id"],
+                routine_id=w.get("routine_id"),
+                days=w.get("days", []),
+                created_at=w["created_at"],
+                updated_at=w.get("updated_at", w["created_at"]),
+                version=w.get("version", 1)
+            ))
+        except Exception as e:
+            logger.error(f"Error processing workout {w.get('id')}: {e}")
+            continue
+    
+    return result
 
 @api_router.get("/workouts/{workout_id}", response_model=WorkoutResponse)
 async def get_workout(workout_id: str, current_user: dict = Depends(get_current_user)):
