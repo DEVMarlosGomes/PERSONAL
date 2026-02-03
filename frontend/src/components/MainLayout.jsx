@@ -26,13 +26,22 @@ import {
   MessageCircle,
   Sun,
   Moon,
-  Trophy
+  Trophy,
+  ClipboardList,
+  BookOpen,
+  DollarSign,
+  FolderOpen,
+  Calendar
 } from "lucide-react";
 
 const personalLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/alunos", label: "Alunos", icon: Users },
+  { href: "/rotinas", label: "Rotinas", icon: FolderOpen },
   { href: "/treinos", label: "Treinos", icon: Upload },
+  { href: "/biblioteca", label: "Exercícios", icon: BookOpen },
+  { href: "/avaliacoes", label: "Avaliações", icon: ClipboardList },
+  { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
   { href: "/conquistas", label: "Ranking", icon: Trophy },
   { href: "/chat", label: "Chat", icon: MessageCircle },
@@ -41,6 +50,7 @@ const personalLinks = [
 const studentLinks = [
   { href: "/treino", label: "Meu Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
+  { href: "/minhas-avaliacoes", label: "Avaliações", icon: ClipboardList },
   { href: "/conquistas", label: "Conquistas", icon: Trophy },
   { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
