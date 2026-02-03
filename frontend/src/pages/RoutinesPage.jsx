@@ -216,7 +216,8 @@ export default function RoutinesPage() {
                     Crie uma nova rotina para {getStudentName(selectedStudent)}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <DialogBody>
+                <form id="routine-form" onSubmit={handleSubmit} className="space-y-4 py-2">
                   <div className="space-y-2">
                     <Label>Nome da Rotina *</Label>
                     <Input
@@ -309,16 +310,17 @@ export default function RoutinesPage() {
                       placeholder="Informações adicionais sobre a rotina..."
                     />
                   </div>
-                  <DialogFooter>
-                    <Button type="submit" disabled={submitting}>
-                      {submitting ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        "Criar Rotina"
-                      )}
-                    </Button>
-                  </DialogFooter>
                 </form>
+                </DialogBody>
+                <DialogFooter>
+                  <Button type="submit" form="routine-form" disabled={submitting}>
+                    {submitting ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "Criar Rotina"
+                    )}
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
