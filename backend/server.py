@@ -932,7 +932,8 @@ async def clone_routine(routine_id: str, student_id: str, personal: dict = Depen
         "created_at": now,
         "updated_at": now
     }
-    del new_routine["_id"] if "_id" in new_routine else None
+    if "_id" in new_routine:
+        del new_routine["_id"]
     
     await db.routines.insert_one(new_routine)
     
