@@ -12,6 +12,10 @@ import ProgressPage from "./pages/ProgressPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ChatPage from "./pages/ChatPage";
 import GamificationPage from "./pages/GamificationPage";
+import AssessmentsPage from "./pages/AssessmentsPage";
+import ExerciseLibraryPage from "./pages/ExerciseLibraryPage";
+import FinancialPage from "./pages/FinancialPage";
+import RoutinesPage from "./pages/RoutinesPage";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
