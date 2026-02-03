@@ -6,7 +6,7 @@ import pandas as pd
 from datetime import datetime
 
 class PersonalTrainerAPITester:
-    def __init__(self, base_url="https://fitmaster-6.preview.emergentagent.com"):
+    def __init__(self, base_url="https://efficient-push-app.preview.emergentagent.com"):
         self.base_url = base_url
         self.personal_token = None
         self.student_token = None
