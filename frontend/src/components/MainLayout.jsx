@@ -47,12 +47,27 @@ const personalLinks = [
   { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
+// Links principais para navbar horizontal (desktop)
+const personalMainLinks = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/alunos", label: "Alunos", icon: Users },
+  { href: "/rotinas", label: "Rotinas", icon: FolderOpen },
+  { href: "/treinos", label: "Treinos", icon: Upload },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
+];
+
 const studentLinks = [
   { href: "/treino", label: "Meu Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
-  { href: "/minhas-avaliacoes", label: "Avaliações", icon: ClipboardList },
   { href: "/conquistas", label: "Conquistas", icon: Trophy },
   { href: "/chat", label: "Chat", icon: MessageCircle },
+];
+
+// Links principais para aluno (navbar horizontal)
+const studentMainLinks = [
+  { href: "/treino", label: "Treino", icon: Dumbbell },
+  { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
+  { href: "/conquistas", label: "Conquistas", icon: Trophy },
 ];
 
 export const MainLayout = ({ children }) => {
