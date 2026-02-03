@@ -154,7 +154,13 @@ export default function StudentsPage() {
       email: student.email,
       password: "",
       phone: student.phone || "",
-      notes: student.notes || ""
+      notes: student.notes || "",
+      birth_date: student.birth_date || "",
+      gender: student.gender || "",
+      objective: student.objective || "",
+      medical_restrictions: student.medical_restrictions || "",
+      emergency_contact: student.emergency_contact || "",
+      address: student.address || ""
     });
     setIsEditDialogOpen(true);
   };
