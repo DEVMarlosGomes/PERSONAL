@@ -416,6 +416,21 @@ export default function StudentsPage() {
                     </p>
                   )}
 
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {student.objective && (
+                      <Badge variant="outline" className="text-xs">
+                        <Target className="w-3 h-3 mr-1" />
+                        {student.objective}
+                      </Badge>
+                    )}
+                    {student.medical_restrictions && (
+                      <Badge variant="outline" className="text-xs text-yellow-400 border-yellow-400/30">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        Restrição
+                      </Badge>
+                    )}
+                  </div>
+
                   {student.notes && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                       {student.notes}
