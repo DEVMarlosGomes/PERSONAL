@@ -447,21 +447,23 @@ export default function RoutinesPage() {
                 Clone "{selectedRoutine?.name}" para outro aluno
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Aluno Destino</Label>
-                <Select value={cloneTargetStudent} onValueChange={setCloneTargetStudent}>
-                  <SelectTrigger className="bg-secondary/50 border-white/10">
-                    <SelectValue placeholder="Selecione o aluno" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <DialogBody>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label>Aluno Destino</Label>
+                  <Select value={cloneTargetStudent} onValueChange={setCloneTargetStudent}>
+                    <SelectTrigger className="bg-secondary/50 border-white/10">
+                      <SelectValue placeholder="Selecione o aluno" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {students.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCloneDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleClone} disabled={submitting}>
