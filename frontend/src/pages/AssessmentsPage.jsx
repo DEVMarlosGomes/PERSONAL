@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogBody,
 } from "../components/ui/dialog";
 import {
   Select,
