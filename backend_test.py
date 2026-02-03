@@ -10,10 +10,16 @@ class PersonalTrainerAPITester:
         self.base_url = base_url
         self.personal_token = None
         self.student_token = None
+        self.existing_student_token = None
         self.tests_run = 0
         self.tests_passed = 0
         self.created_student_id = None
         self.created_workout_id = None
+        self.created_assessment_id = None
+        self.created_routine_id = None
+        self.created_exercise_id = None
+        self.created_payment_id = None
+        self.existing_student_id = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, files=None):
         """Run a single API test"""
