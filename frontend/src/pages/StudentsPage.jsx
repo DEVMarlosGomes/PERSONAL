@@ -560,10 +560,9 @@ export default function StudentsPage() {
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   "Salvar"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
+                )}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
