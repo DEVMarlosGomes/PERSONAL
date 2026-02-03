@@ -48,7 +48,13 @@ export default function StudentsPage() {
     email: "",
     password: "",
     phone: "",
-    notes: ""
+    notes: "",
+    birth_date: "",
+    gender: "",
+    objective: "",
+    medical_restrictions: "",
+    emergency_contact: "",
+    address: ""
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -79,7 +85,7 @@ export default function StudentsPage() {
       await api.post("/students", formData);
       toast.success("Aluno cadastrado com sucesso!");
       setIsAddDialogOpen(false);
-      setFormData({ name: "", email: "", password: "", phone: "", notes: "" });
+      setFormData({ name: "", email: "", password: "", phone: "", notes: "", birth_date: "", gender: "", objective: "", medical_restrictions: "", emergency_contact: "", address: "" });
       loadStudents();
     } catch (error) {
       const message = error.response?.data?.detail || "Erro ao cadastrar aluno";
@@ -98,7 +104,13 @@ export default function StudentsPage() {
       await api.put(`/students/${selectedStudent.id}`, {
         name: formData.name,
         phone: formData.phone,
-        notes: formData.notes
+        notes: formData.notes,
+        birth_date: formData.birth_date,
+        gender: formData.gender,
+        objective: formData.objective,
+        medical_restrictions: formData.medical_restrictions,
+        emergency_contact: formData.emergency_contact,
+        address: formData.address
       });
       toast.success("Aluno atualizado com sucesso!");
       setIsEditDialogOpen(false);
