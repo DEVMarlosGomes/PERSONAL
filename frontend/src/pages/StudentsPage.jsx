@@ -311,7 +311,7 @@ export default function StudentsPage() {
                     data-testid="add-student-notes"
                   />
                 </div>
-                <DialogFooter>
+                <DialogFooter className="pt-4 border-t border-border mt-4 flex-shrink-0">
                   <Button type="submit" disabled={submitting} data-testid="submit-add-student">
                     {submitting ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
