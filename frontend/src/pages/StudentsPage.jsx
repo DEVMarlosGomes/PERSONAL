@@ -245,6 +245,60 @@ export default function StudentsPage() {
                     data-testid="add-student-phone"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="add-birth_date">Data de Nascimento</Label>
+                    <Input
+                      id="add-birth_date"
+                      type="date"
+                      value={formData.birth_date}
+                      onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                      className="bg-secondary/50 border-white/10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-gender">Gênero</Label>
+                    <select
+                      id="add-gender"
+                      value={formData.gender}
+                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                      className="flex h-10 w-full rounded-md border border-white/10 bg-secondary/50 px-3 py-2 text-sm"
+                    >
+                      <option value="">Selecione</option>
+                      <option value="Masculino">Masculino</option>
+                      <option value="Feminino">Feminino</option>
+                      <option value="Outro">Outro</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="add-objective">Objetivo</Label>
+                  <select
+                    id="add-objective"
+                    value={formData.objective}
+                    onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
+                    className="flex h-10 w-full rounded-md border border-white/10 bg-secondary/50 px-3 py-2 text-sm"
+                  >
+                    <option value="">Selecione o objetivo</option>
+                    <option value="Emagrecimento">Emagrecimento</option>
+                    <option value="Hipertrofia">Hipertrofia</option>
+                    <option value="Condicionamento">Condicionamento</option>
+                    <option value="Força">Força</option>
+                    <option value="Resistência">Resistência</option>
+                    <option value="Reabilitação">Reabilitação</option>
+                    <option value="Qualidade de vida">Qualidade de vida</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="add-medical">Restrições Médicas</Label>
+                  <Textarea
+                    id="add-medical"
+                    value={formData.medical_restrictions}
+                    onChange={(e) => setFormData({ ...formData, medical_restrictions: e.target.value })}
+                    placeholder="Lesões, problemas cardíacos, alergias..."
+                    className="bg-secondary/50 border-white/10"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="add-notes">Observações</Label>
                   <Textarea
