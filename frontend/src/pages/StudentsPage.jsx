@@ -192,14 +192,14 @@ export default function StudentsPage() {
                 Novo Aluno
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-border">
-              <DialogHeader>
+            <DialogContent className="bg-card border-border max-h-[85vh] overflow-hidden flex flex-col">
+              <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="text-xl font-bold uppercase">Cadastrar Aluno</DialogTitle>
                 <DialogDescription>
                   Preencha os dados do novo aluno
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleAddStudent} className="space-y-4">
+              <form onSubmit={handleAddStudent} className="space-y-4 overflow-y-auto flex-1 pr-2">
                 <div className="space-y-2">
                   <Label htmlFor="add-name">Nome *</Label>
                   <Input
