@@ -376,6 +376,283 @@ class PersonalTrainerAPITester:
         )
         return success, response
 
+    # ==================== FITMASTER NEW FEATURES TESTS ====================
+    
+    def test_create_physical_assessment(self):
+        """Test creating physical assessment"""
+        if not self.created_student_id:
+            print("❌ No student ID available for testing")
+            return False, {}
+            
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        assessment_data = {
+            "student_id": self.created_student_id,
+            "assessment_type": "manual",
+            "date": "2024-01-15",
+            "weight": 75.5,
+            "height": 175.0,
+            "body_fat_percentage": 15.2,
+            "muscle_mass": 45.8,
+            "chest": 95.0,
+            "waist": 80.0,
+            "hip": 98.0,
+            "arm_right": 35.0,
+            "arm_left": 34.5,
+            "thigh_right": 58.0,
+            "thigh_left": 57.5,
+            "notes": "Primeira avaliação física do aluno"
+        }
+        
+        success, response = self.run_test(
+            "Create Physical Assessment",
+            "POST",
+            "assessments",
+            200,
+            data=assessment_data,
+            headers=headers
+        )
+        
+        if success and 'id' in response:
+            self.created_assessment_id = response['id']
+            print(f"   Assessment created with ID: {self.created_assessment_id}")
+            return True, response
+        return False, {}
+
+    def test_list_assessments(self):
+        """Test listing assessments for a student"""
+        if not self.created_student_id:
+            print("❌ No student ID available for testing")
+            return False, {}
+            
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        success, response = self.run_test(
+            "List Assessments",
+            "GET",
+            f"assessments?student_id={self.created_student_id}",
+            200,
+            headers=headers
+        )
+        return success, response
+
+    def test_compare_assessments(self):
+        """Test comparing assessments"""
+        if not self.created_student_id:
+            print("❌ No student ID available for testing")
+            return False, {}
+            
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        success, response = self.run_test(
+            "Compare Assessments",
+            "GET",
+            f"assessments/compare/{self.created_student_id}",
+            200,
+            headers=headers
+        )
+        return success, response
+
+    def test_create_training_routine(self):
+        """Test creating training routine"""
+        if not self.created_student_id:
+            print("❌ No student ID available for testing")
+            return False, {}
+            
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        routine_data = {
+            "student_id": self.created_student_id,
+            "name": "Rotina Hipertrofia - Semana 1",
+            "start_date": "2024-01-15",
+            "end_date": "2024-02-15",
+            "objective": "Hipertrofia",
+            "level": "Intermediário",
+            "day_type": "Por Dia da Semana",
+            "auto_archive": True,
+            "notes": "Rotina focada em hipertrofia muscular"
+        }
+        
+        success, response = self.run_test(
+            "Create Training Routine",
+            "POST",
+            "routines",
+            200,
+            data=routine_data,
+            headers=headers
+        )
+        
+        if success and 'id' in response:
+            self.created_routine_id = response['id']
+            print(f"   Routine created with ID: {self.created_routine_id}")
+            return True, response
+        return False, {}
+
+    def test_list_routines(self):
+        """Test listing training routines"""
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        success, response = self.run_test(
+            "List Training Routines",
+            "GET",
+            "routines",
+            200,
+            headers=headers
+        )
+        return success, response
+
+    def test_clone_routine(self):
+        """Test cloning training routine"""
+        if not self.created_routine_id or not self.created_student_id:
+            print("❌ No routine ID or student ID available for testing")
+            return False, {}
+            
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        success, response = self.run_test(
+            "Clone Training Routine",
+            "POST",
+            f"routines/{self.created_routine_id}/clone?student_id={self.created_student_id}",
+            200,
+            headers=headers
+        )
+        return success, response
+
+    def test_get_exercise_categories(self):
+        """Test getting exercise categories"""
+        success, response = self.run_test(
+            "Get Exercise Categories",
+            "GET",
+            "exercise-library/categories",
+            200
+        )
+        return success, response
+
+    def test_list_exercise_library(self):
+        """Test listing exercises from library"""
+        success, response = self.run_test(
+            "List Exercise Library",
+            "GET",
+            "exercise-library",
+            200
+        )
+        return success, response
+
+    def test_create_custom_exercise(self):
+        """Test creating custom exercise"""
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        exercise_data = {
+            "name": "Supino Inclinado com Halteres",
+            "category": "PEITORAL",
+            "description": "Exercício para desenvolvimento do peitoral superior",
+            "instructions": "Deite no banco inclinado, segure os halteres e execute o movimento",
+            "muscles_worked": ["Peitoral Superior", "Deltóide Anterior", "Tríceps"]
+        }
+        
+        success, response = self.run_test(
+            "Create Custom Exercise",
+            "POST",
+            "exercise-library",
+            200,
+            data=exercise_data,
+            headers=headers
+        )
+        
+        if success and 'id' in response:
+            self.created_exercise_id = response['id']
+            print(f"   Exercise created with ID: {self.created_exercise_id}")
+            return True, response
+        return False, {}
+
+    def test_create_financial_payment(self):
+        """Test creating financial payment"""
+        if not self.created_student_id:
+            print("❌ No student ID available for testing")
+            return False, {}
+            
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        payment_data = {
+            "student_id": self.created_student_id,
+            "amount": 150.00,
+            "due_date": "2024-01-31",
+            "status": "pending",
+            "payment_method": "PIX",
+            "notes": "Mensalidade Janeiro 2024"
+        }
+        
+        success, response = self.run_test(
+            "Create Financial Payment",
+            "POST",
+            "financial/payments",
+            200,
+            data=payment_data,
+            headers=headers
+        )
+        
+        if success and 'id' in response:
+            self.created_payment_id = response['id']
+            print(f"   Payment created with ID: {self.created_payment_id}")
+            return True, response
+        return False, {}
+
+    def test_list_financial_payments(self):
+        """Test listing financial payments"""
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        success, response = self.run_test(
+            "List Financial Payments",
+            "GET",
+            "financial/payments",
+            200,
+            headers=headers
+        )
+        return success, response
+
+    def test_financial_summary(self):
+        """Test getting financial summary"""
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        success, response = self.run_test(
+            "Get Financial Summary",
+            "GET",
+            "financial/summary",
+            200,
+            headers=headers
+        )
+        return success, response
+
+    def test_mark_payment_as_paid(self):
+        """Test marking payment as paid"""
+        if not self.created_payment_id:
+            print("❌ No payment ID available for testing")
+            return False, {}
+            
+        headers = {'Authorization': f'Bearer {self.personal_token}'}
+        update_data = {
+            "status": "paid",
+            "payment_date": "2024-01-25",
+            "payment_method": "PIX"
+        }
+        
+        success, response = self.run_test(
+            "Mark Payment as Paid",
+            "PUT",
+            f"financial/payments/{self.created_payment_id}",
+            200,
+            data=update_data,
+            headers=headers
+        )
+        return success, response
+
+    def test_existing_student_login(self):
+        """Test login with existing student"""
+        success, response = self.run_test(
+            "Existing Student Login",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": "joao@test.com", "password": "test123"}
+        )
+        
+        if success and 'access_token' in response:
+            self.existing_student_token = response['access_token']
+            self.existing_student_id = response['user']['id']
+            print(f"   Existing student token obtained: {self.existing_student_token[:20]}...")
+            return True, response['user']
+        return False, {}
+
 def main():
     print("🏋️ Personal Trainer API Testing Started")
     print("=" * 50)
