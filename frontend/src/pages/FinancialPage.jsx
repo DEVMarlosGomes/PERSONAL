@@ -211,7 +211,8 @@ export default function FinancialPage() {
                     Registre um novo pagamento ou cobrança
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <DialogBody>
+                <form id="payment-form" onSubmit={handleSubmit} className="space-y-4 py-2">
                   <div className="space-y-2">
                     <Label>Aluno *</Label>
                     <Select value={formData.student_id} onValueChange={(v) => setFormData({...formData, student_id: v})}>
@@ -285,16 +286,17 @@ export default function FinancialPage() {
                       placeholder="Referente a..."
                     />
                   </div>
-                  <DialogFooter>
-                    <Button type="submit" disabled={submitting}>
-                      {submitting ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        "Registrar Pagamento"
-                      )}
-                    </Button>
-                  </DialogFooter>
                 </form>
+                </DialogBody>
+                <DialogFooter>
+                  <Button type="submit" form="payment-form" disabled={submitting}>
+                    {submitting ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "Registrar Pagamento"
+                    )}
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
