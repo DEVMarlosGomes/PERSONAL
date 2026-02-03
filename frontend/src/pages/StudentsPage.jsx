@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
+import { Badge } from "../components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Users, Plus, Search, Mail, Phone, Edit, Trash2, Dumbbell, MoreVertical, FileText } from "lucide-react";
+import { Users, Plus, Search, Mail, Phone, Edit, Trash2, Dumbbell, MoreVertical, FileText, Target, AlertCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
