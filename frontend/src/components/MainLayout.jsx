@@ -32,7 +32,9 @@ import {
   BookOpen,
   DollarSign,
   FolderOpen,
-  Settings
+  Settings,
+  CalendarCheck,
+  Camera
 } from "lucide-react";
 
 // Links do Personal Trainer para Sidebar
@@ -43,6 +45,8 @@ const personalLinks = [
   { href: "/treinos", label: "Treinos", icon: Upload },
   { href: "/biblioteca", label: "Exercícios", icon: BookOpen },
   { href: "/avaliacoes", label: "Avaliações", icon: ClipboardList },
+  { href: "/frequencia", label: "Frequência", icon: CalendarCheck },
+  { href: "/fotos-evolucao", label: "Fotos", icon: Camera },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
   { href: "/conquistas", label: "Ranking", icon: Trophy },
@@ -53,6 +57,10 @@ const personalLinks = [
 const studentLinks = [
   { href: "/treino", label: "Meu Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
+  { href: "/minhas-avaliacoes", label: "Avaliações", icon: ClipboardList },
+  { href: "/frequencia", label: "Check-in", icon: CalendarCheck },
+  { href: "/fotos-evolucao", label: "Fotos", icon: Camera },
+  { href: "/meu-financeiro", label: "Mensalidade", icon: DollarSign },
   { href: "/conquistas", label: "Conquistas", icon: Trophy },
   { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
@@ -61,6 +69,9 @@ const studentLinks = [
 const studentMainLinks = [
   { href: "/treino", label: "Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
+  { href: "/frequencia", label: "Check-in", icon: CalendarCheck },
+  { href: "/meu-financeiro", label: "Mensalidade", icon: DollarSign },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/conquistas", label: "Conquistas", icon: Trophy },
 ];
 
@@ -113,7 +124,7 @@ export const MainLayout = ({ children }) => {
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                       isActive
                         ? "bg-primary text-white font-semibold"
-                        : "text-muted-foreground hover:text-white hover:bg-secondary/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50"
                     } ${sidebarCollapsed ? 'justify-center' : ''}`}
                     title={sidebarCollapsed ? link.label : ''}
                   >
@@ -129,7 +140,7 @@ export const MainLayout = ({ children }) => {
           <div className="p-4 border-t border-border space-y-2">
             <Link
               to="/notificacoes"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:text-white hover:bg-secondary/50 transition-colors ${sidebarCollapsed ? 'justify-center' : ''}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50 transition-colors ${sidebarCollapsed ? 'justify-center' : ''}`}
               title={sidebarCollapsed ? 'Notificações' : ''}
             >
               <Bell className="w-5 h-5" />
@@ -195,7 +206,7 @@ export const MainLayout = ({ children }) => {
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                                   isActive
                                     ? "bg-primary text-white font-semibold"
-                                    : "text-muted-foreground hover:text-white hover:bg-secondary/50"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50"
                                 }`}
                               >
                                 <link.icon className="w-5 h-5" />
@@ -212,8 +223,8 @@ export const MainLayout = ({ children }) => {
                         <Link
                           to="/notificacoes"
                           onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:text-white hover:bg-secondary/50"
-                        >
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50"
+                      >
                           <Bell className="w-5 h-5" />
                           Notificações
                         </Link>
@@ -323,7 +334,7 @@ export const MainLayout = ({ children }) => {
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                       isActive
                         ? "bg-primary text-white font-semibold"
-                        : "text-muted-foreground hover:text-white hover:bg-secondary/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50"
                     }`}
                   >
                     <link.icon className="w-4 h-4" />
@@ -405,12 +416,12 @@ export const MainLayout = ({ children }) => {
                               key={link.href}
                               to={link.href}
                               onClick={() => setMobileMenuOpen(false)}
-                              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                                isActive
-                                  ? "bg-primary text-white font-semibold"
-                                  : "text-muted-foreground hover:text-white hover:bg-secondary/50"
-                              }`}
-                            >
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                              isActive
+                                ? "bg-primary text-white font-semibold"
+                                : "text-muted-foreground hover:text-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50"
+                            }`}
+                          >
                               <link.icon className="w-5 h-5" />
                               {link.label}
                               {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
@@ -423,7 +434,7 @@ export const MainLayout = ({ children }) => {
                       <Link
                         to="/notificacoes"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 mt-2 rounded-lg text-muted-foreground hover:text-white hover:bg-secondary/50 transition-colors"
+                        className="flex items-center gap-3 px-4 py-3 mt-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50 transition-colors"
                       >
                         <Bell className="w-5 h-5" />
                         Notificações

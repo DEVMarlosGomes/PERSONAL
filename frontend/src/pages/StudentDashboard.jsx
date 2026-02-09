@@ -5,6 +5,17 @@ import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Progress } from "../components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogBody,
+} from "../components/ui/dialog";
+import { Textarea } from "../components/ui/textarea";
 import { 
   Dumbbell, 
   Calendar, 
@@ -13,7 +24,8 @@ import {
   ChevronRight,
   Play,
   Clock,
-  Target
+  Target,
+  Trophy
 } from "lucide-react";
 import api from "../lib/api";
 import { toast } from "sonner";
@@ -27,6 +39,12 @@ export default function StudentDashboard() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessions, setSessions] = useState([]);
+  const [weeklySessions, setWeeklySessions] = useState([]);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const [sessionNotes, setSessionNotes] = useState("");
+  const [sessionDifficulty, setSessionDifficulty] = useState(3);
+  const [completing, setCompleting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -34,9 +52,15 @@ export default function StudentDashboard() {
 
   const loadData = async () => {
     try {
-      const [workoutsRes, statsRes] = await Promise.all([
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 6);
+      const startStr = startDate.toISOString().split("T")[0];
+
+      const [workoutsRes, statsRes, sessionsRes, weeklyRes] = await Promise.all([
         api.get("/workouts"),
-        api.get("/stats/student")
+        api.get("/stats/student"),
+        api.get("/workout-sessions"),
+        api.get(`/workout-sessions?start_date=${startStr}`)
       ]);
       
       if (workoutsRes.data.length > 0) {
@@ -46,6 +70,8 @@ export default function StudentDashboard() {
         }
       }
       setStats(statsRes.data);
+      setSessions(sessionsRes.data);
+      setWeeklySessions(weeklyRes.data);
     } catch (error) {
       toast.error("Erro ao carregar treino");
     } finally {
@@ -63,6 +89,36 @@ export default function StudentDashboard() {
 
   const handleProgressLogged = () => {
     toast.success("Progresso registrado!");
+  };
+
+  const handleCompleteWorkout = async () => {
+    if (!workout) return;
+    setCompleting(true);
+    try {
+      await api.post("/workout-sessions", {
+        workout_id: workout.id,
+        day_name: selectedDay?.day_name,
+        notes: sessionNotes || null,
+        difficulty: sessionDifficulty
+      });
+      toast.success("Treino concluído!");
+      setIsCompleteDialogOpen(false);
+      setSessionNotes("");
+      setSessionDifficulty(3);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 6);
+      const startStr = startDate.toISOString().split("T")[0];
+      const [sessionsRes, weeklyRes] = await Promise.all([
+        api.get("/workout-sessions"),
+        api.get(`/workout-sessions?start_date=${startStr}`)
+      ]);
+      setSessions(sessionsRes.data);
+      setWeeklySessions(weeklyRes.data);
+    } catch (error) {
+      toast.error("Erro ao concluir treino");
+    } finally {
+      setCompleting(false);
+    }
   };
 
   if (loading) {
@@ -126,6 +182,23 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
+        {/* Weekly Challenge */}
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-yellow-400" />
+                <p className="font-semibold">Desafio semanal</p>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {weeklySessions.length}/3 treinos
+              </span>
+            </div>
+            <Progress value={Math.min((weeklySessions.length / 3) * 100, 100)} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-2">Meta: 3 treinos na semana</p>
+          </CardContent>
+        </Card>
+
         {/* Workout Name */}
         <div className="flex items-center justify-between">
           <div>
@@ -136,6 +209,60 @@ export default function StudentDashboard() {
               Versão {workout.version} • Atualizado em {new Date(workout.updated_at).toLocaleDateString('pt-BR')}
             </p>
           </div>
+          <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2" data-testid="complete-workout-btn">
+                <CheckCircle2 className="w-4 h-4" />
+                Concluir Treino
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold uppercase">Concluir Treino</DialogTitle>
+                <DialogDescription>
+                  Registre a conclusão do treino do dia
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Dificuldade geral</p>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <Button
+                          key={level}
+                          type="button"
+                          variant={sessionDifficulty === level ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setSessionDifficulty(level)}
+                        >
+                          {level}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Observações do treino (opcional)"
+                      value={sessionNotes}
+                      onChange={(e) => setSessionNotes(e.target.value)}
+                      className="bg-secondary/50 border-white/10"
+                    />
+                  </div>
+                </div>
+              </DialogBody>
+              <DialogFooter>
+                <Button onClick={handleCompleteWorkout} disabled={completing}>
+                  {completing ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "Concluir"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Day Tabs */}
@@ -190,6 +317,37 @@ export default function StudentDashboard() {
             onProgressLogged={handleProgressLogged}
           />
         )}
+
+        {/* Workout Sessions History */}
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <h3 className="font-bold mb-3 uppercase text-sm text-muted-foreground">Treinos Concluídos</h3>
+            {sessions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Ainda não há treinos concluídos.</p>
+            ) : (
+              <div className="space-y-2">
+                {sessions.slice(0, 6).map((s) => (
+                  <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+                    <div>
+                      <p className="font-semibold">{s.day_name || "Treino"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(s.completed_at).toLocaleDateString('pt-BR', {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Dificuldade: {s.difficulty || "-"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );

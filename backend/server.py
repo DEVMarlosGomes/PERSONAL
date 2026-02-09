@@ -17,6 +17,7 @@ import pandas as pd
 from io import BytesIO
 import base64
 import shutil
+import re
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -99,8 +100,9 @@ EXERCISE_IMAGES = {
 }
 
 EXERCISE_VIDEOS = {
-    "supino reto": "https://www.youtube.com/embed/gRVjAtPip0Y",
+    "supino reto": "https://www.youtube.com/embed/fG_03xSzT2s",
     "supino inclinado": "https://www.youtube.com/embed/jPLdzuHckI8",
+    "supino inclinado com halter": "https://www.youtube.com/embed/Cjh2fIMQHk0",
     "puxada frontal": "https://www.youtube.com/embed/CAwf7n6Luuc",
     "remada curvada": "https://www.youtube.com/embed/kBWAon7ItDw",
     "agachamento": "https://www.youtube.com/embed/ultWZbUMPL8",
@@ -117,6 +119,17 @@ EXERCISE_VIDEOS = {
     "prancha": "https://www.youtube.com/embed/ASdvN_XEl_c",
 }
 
+def normalize_youtube_url(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return None
+    if "/embed/" in url:
+        return url
+    # Try to extract video id from common patterns
+    match = re.search(r"(?:v=|youtu\.be/|embed/)([\w-]+)", url)
+    if match:
+        return f"https://www.youtube.com/embed/{match.group(1)}"
+    return url
+
 def get_exercise_image(exercise_name: str) -> Optional[str]:
     name_lower = exercise_name.lower().strip()
     if name_lower in EXERCISE_IMAGES:
@@ -124,6 +137,15 @@ def get_exercise_image(exercise_name: str) -> Optional[str]:
     for key, url in EXERCISE_IMAGES.items():
         if key in name_lower or name_lower in key:
             return url
+    return None
+
+def get_exercise_video(exercise_name: str) -> Optional[str]:
+    name_lower = exercise_name.lower().strip()
+    if name_lower in EXERCISE_VIDEOS:
+        return normalize_youtube_url(EXERCISE_VIDEOS[name_lower])
+    for key, url in EXERCISE_VIDEOS.items():
+        if key in name_lower or name_lower in key:
+            return normalize_youtube_url(url)
     return None
 
 # ==================== MODELS ====================
@@ -391,6 +413,23 @@ class ProgressResponse(BaseModel):
     notes: Optional[str] = None
     difficulty: Optional[int] = None
     logged_at: str
+
+# ==================== WORKOUT SESSION MODELS ====================
+
+class WorkoutSessionCreate(BaseModel):
+    workout_id: str
+    day_name: Optional[str] = None
+    notes: Optional[str] = None
+    difficulty: Optional[int] = None  # 1-5 scale
+
+class WorkoutSessionResponse(BaseModel):
+    id: str
+    student_id: str
+    workout_id: str
+    day_name: Optional[str] = None
+    notes: Optional[str] = None
+    difficulty: Optional[int] = None
+    completed_at: str
 
 # ==================== CHECK-IN MODELS ====================
 
@@ -697,6 +736,7 @@ async def delete_student(student_id: str, personal: dict = Depends(get_personal_
     await db.plans.delete_many({"student_id": student_id})
     await db.checkins.delete_many({"student_id": student_id})
     await db.evolution_photos.delete_many({"student_id": student_id})
+    await db.workout_sessions.delete_many({"student_id": student_id})
     
     return {"message": "Aluno removido com sucesso"}
 
@@ -1382,7 +1422,7 @@ async def upload_workout(
                     "weight": str(row.get('Carga', '')).strip() if pd.notna(row.get('Carga')) else None,
                     "notes": str(row.get('Observações', '')).strip() if pd.notna(row.get('Observações')) else None,
                     "image_url": get_exercise_image(exercise_name),
-                    "video_url": None,
+                    "video_url": get_exercise_video(exercise_name),
                     "description": str(row.get('Descrição', '')).strip() if pd.notna(row.get('Descrição')) else None,
                     "rest_time": 90
                 }
@@ -1609,6 +1649,58 @@ async def delete_workout(workout_id: str, personal: dict = Depends(get_personal_
         raise HTTPException(status_code=404, detail="Treino não encontrado")
     return {"message": "Treino removido com sucesso"}
 
+@api_router.post("/workouts/{workout_id}/assign")
+async def assign_workout_to_student(
+    workout_id: str,
+    student_id: str,
+    personal: dict = Depends(get_personal_user)
+):
+    student = await db.users.find_one({"id": student_id, "personal_id": personal["id"]})
+    if not student:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+
+    workout = await db.workouts.find_one({"id": workout_id, "personal_id": personal["id"]}, {"_id": 0})
+    if not workout:
+        raise HTTPException(status_code=404, detail="Treino não encontrado")
+
+    existing = await db.workouts.find_one(
+        {
+            "student_id": student_id,
+            "name": workout.get("name"),
+            "routine_id": workout.get("routine_id")
+        },
+        {"_id": 0}
+    )
+    next_version = (existing.get("version", 1) + 1) if existing else 1
+
+    new_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    new_workout = {
+        "id": new_id,
+        "name": workout.get("name") or "Treino",
+        "student_id": student_id,
+        "personal_id": personal["id"],
+        "routine_id": workout.get("routine_id"),
+        "days": workout.get("days", []),
+        "created_at": now,
+        "updated_at": now,
+        "version": next_version
+    }
+
+    await db.workouts.insert_one(new_workout)
+
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": student_id,
+        "title": "Treino atualizado",
+        "message": f"Seu personal enviou um treino: {new_workout['name']}",
+        "type": "workout",
+        "read": False,
+        "created_at": now
+    })
+
+    return {"message": "Treino enviado com sucesso", "workout_id": new_id}
+
 # ==================== PROGRESS TRACKING ====================
 
 @api_router.post("/progress", response_model=ProgressResponse)
@@ -1708,6 +1800,146 @@ async def get_evolution(
             })
     
     return evolution_data
+
+@api_router.get("/progress/suggestion")
+async def get_progress_suggestion(
+    exercise_name: str,
+    workout_id: Optional[str] = None,
+    student_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] == "student":
+        target_student_id = current_user["id"]
+    else:
+        if not student_id:
+            raise HTTPException(status_code=400, detail="student_id é obrigatório para personal")
+        student = await db.users.find_one({"id": student_id, "personal_id": current_user["id"]})
+        if not student:
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
+        target_student_id = student_id
+
+    progress_list = await db.progress.find(
+        {"student_id": target_student_id, "exercise_name": exercise_name},
+        {"_id": 0}
+    ).sort("logged_at", -1).to_list(3)
+
+    if len(progress_list) < 3:
+        return {"eligible": False, "reason": "Poucos registros recentes para sugerir aumento"}
+
+    # Determine target reps from workout, if provided
+    target_reps_min = None
+    if workout_id:
+        workout = await db.workouts.find_one({"id": workout_id, "student_id": target_student_id}, {"_id": 0})
+        if workout:
+            for day in workout.get("days", []):
+                for ex in day.get("exercises", []):
+                    if ex.get("name", "").lower().strip() == exercise_name.lower().strip():
+                        reps_text = ex.get("reps", "")
+                        numbers = re.findall(r"\d+", reps_text)
+                        if numbers:
+                            target_reps_min = int(numbers[0])
+                        break
+
+    def reps_completed_ok(progress_item):
+        sets = progress_item.get("sets_completed", [])
+        if not sets:
+            return False
+        if target_reps_min is None:
+            return True
+        return all((s.get("reps", 0) or 0) >= target_reps_min for s in sets)
+
+    for p in progress_list:
+        if p.get("difficulty") is None or p.get("difficulty") > 2:
+            return {"eligible": False, "reason": "Dificuldade alta nos últimos treinos"}
+        if not reps_completed_ok(p):
+            return {"eligible": False, "reason": "Repetições não concluídas na meta"}
+
+    last = progress_list[0]
+    if not last.get("sets_completed"):
+        return {"eligible": False, "reason": "Sem dados suficientes de carga"}
+
+    current_max = max((s.get("weight", 0) for s in last["sets_completed"]), default=0)
+    if current_max <= 0:
+        return {"eligible": False, "reason": "Carga atual inválida"}
+
+    increase = max(2.5, round(current_max * 0.05, 2))
+    suggested = round(current_max + increase, 1)
+
+    return {
+        "eligible": True,
+        "reason": "3 treinos seguidos com baixa dificuldade e reps completas",
+        "current_max_weight": current_max,
+        "increase": increase,
+        "suggested_weight": suggested
+    }
+
+# ==================== WORKOUT SESSIONS ====================
+
+@api_router.post("/workout-sessions", response_model=WorkoutSessionResponse)
+async def create_workout_session(
+    session: WorkoutSessionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] != "student":
+        raise HTTPException(status_code=403, detail="Apenas alunos podem concluir treinos")
+
+    workout = await db.workouts.find_one(
+        {"id": session.workout_id, "student_id": current_user["id"], "archived": {"$ne": True}},
+        {"_id": 0}
+    )
+    if not workout:
+        raise HTTPException(status_code=404, detail="Treino não encontrado")
+
+    session_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    session_doc = {
+        "id": session_id,
+        "student_id": current_user["id"],
+        "workout_id": session.workout_id,
+        "day_name": session.day_name,
+        "notes": session.notes,
+        "difficulty": session.difficulty,
+        "completed_at": now
+    }
+
+    await db.workout_sessions.insert_one(session_doc)
+    return WorkoutSessionResponse(**session_doc)
+
+@api_router.get("/workout-sessions", response_model=List[WorkoutSessionResponse])
+async def list_workout_sessions(
+    student_id: Optional[str] = None,
+    workout_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query: Dict[str, Any] = {}
+
+    if current_user["role"] == "personal":
+        if student_id:
+            student = await db.users.find_one({"id": student_id, "personal_id": current_user["id"]})
+            if not student:
+                raise HTTPException(status_code=404, detail="Aluno não encontrado")
+            query["student_id"] = student_id
+        else:
+            students = await db.users.find({"personal_id": current_user["id"], "role": "student"}, {"id": 1}).to_list(1000)
+            student_ids = [s["id"] for s in students]
+            query["student_id"] = {"$in": student_ids}
+    else:
+        query["student_id"] = current_user["id"]
+
+    if workout_id:
+        query["workout_id"] = workout_id
+
+    if start_date or end_date:
+        query["completed_at"] = {}
+        if start_date:
+            query["completed_at"]["$gte"] = start_date
+        if end_date:
+            query["completed_at"]["$lte"] = end_date + "T23:59:59"
+
+    sessions = await db.workout_sessions.find(query, {"_id": 0}).sort("completed_at", -1).to_list(500)
+    return [WorkoutSessionResponse(**s) for s in sessions]
 
 # ==================== NOTIFICATIONS ====================
 
@@ -1946,16 +2178,7 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
 
 @api_router.get("/exercises/video/{exercise_name}")
 async def get_exercise_video(exercise_name: str):
-    name_lower = exercise_name.lower().strip()
-    
-    if name_lower in EXERCISE_VIDEOS:
-        return {"video_url": EXERCISE_VIDEOS[name_lower]}
-    
-    for key, url in EXERCISE_VIDEOS.items():
-        if key in name_lower or name_lower in key:
-            return {"video_url": url}
-    
-    return {"video_url": None}
+    return {"video_url": get_exercise_video(exercise_name)}
 
 @api_router.get("/exercises/search")
 async def search_exercises(q: str, current_user: dict = Depends(get_current_user)):

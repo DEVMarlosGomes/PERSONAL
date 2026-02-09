@@ -248,6 +248,26 @@ export default function StudentsPage() {
                       data-testid="add-student-phone"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-emergency">Contato de Emergência</Label>
+                    <Input
+                      id="add-emergency"
+                      value={formData.emergency_contact}
+                      onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
+                      placeholder="Nome e telefone"
+                      className="bg-secondary/50 border-white/10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-address">Endereço</Label>
+                    <Input
+                      id="add-address"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Rua, número, bairro"
+                      className="bg-secondary/50 border-white/10"
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="add-birth_date">Data de Nascimento</Label>
@@ -486,6 +506,24 @@ export default function StudentsPage() {
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="bg-secondary/50 border-white/10"
                     data-testid="edit-student-phone"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-emergency">Contato de Emergência</Label>
+                  <Input
+                    id="edit-emergency"
+                    value={formData.emergency_contact}
+                    onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
+                    className="bg-secondary/50 border-white/10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-address">Endereço</Label>
+                  <Input
+                    id="edit-address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="bg-secondary/50 border-white/10"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">

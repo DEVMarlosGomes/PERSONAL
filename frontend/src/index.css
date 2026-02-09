@@ -22,59 +22,59 @@ h1, h2, h3, h4, h5, h6 {
 @layer base {
   /* Dark Theme (default) */
   :root, .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
+    --background: 220 14% 5%;
+    --foreground: 210 20% 98%;
+    --card: 222 16% 10%;
+    --card-foreground: 210 20% 98%;
+    --popover: 222 18% 8%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 217 92% 62%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 185 100% 50%;
+    --secondary: 220 8% 16%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 220 8% 16%;
+    --muted-foreground: 220 7% 65%;
+    --accent: 187 100% 45%;
     --accent-foreground: 0 0% 0%;
-    --destructive: 0 63% 31%;
+    --destructive: 0 72% 35%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 217 91% 60%;
+    --border: 220 10% 18%;
+    --input: 220 10% 18%;
+    --ring: 217 92% 62%;
     --chart-1: 217 91% 60%;
-    --chart-2: 185 100% 50%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-2: 187 100% 45%;
+    --chart-3: 142 70% 42%;
+    --chart-4: 43 78% 62%;
+    --chart-5: 27 85% 62%;
     --radius: 0.5rem;
   }
 
   /* Light Theme */
   .light {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 210 40% 99%;
+    --foreground: 222 20% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 20% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 217 91% 50%;
+    --popover-foreground: 222 20% 12%;
+    --primary: 217 92% 50%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 185 100% 40%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 20% 12%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 220 8% 40%;
+    --accent: 187 100% 38%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 217 91% 50%;
+    --border: 220 10% 88%;
+    --input: 220 10% 88%;
+    --ring: 217 92% 50%;
     --chart-1: 217 91% 50%;
-    --chart-2: 185 100% 40%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 43 74% 56%;
-    --chart-5: 27 87% 57%;
+    --chart-2: 187 100% 38%;
+    --chart-3: 142 70% 42%;
+    --chart-4: 43 76% 52%;
+    --chart-5: 27 84% 52%;
   }
 }
 
@@ -84,26 +84,28 @@ h1, h2, h3, h4, h5, h6 {
   }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(1200px 600px at 10% -10%, rgba(37, 99, 235, 0.12), transparent 60%),
+      radial-gradient(800px 400px at 100% 0%, rgba(0, 240, 255, 0.10), transparent 55%);
   }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: rgba(0, 0, 0, 0.25);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
-  border-radius: 3px;
+  background: rgba(120, 120, 130, 0.45);
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: rgba(120, 120, 130, 0.7);
 }
 
 /* Animations */
@@ -162,13 +164,13 @@ h1, h2, h3, h4, h5, h6 {
 /* Glass effect */
 .glass {
   backdrop-filter: blur(16px);
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #2563eb 0%, #00f0ff 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #00d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -191,7 +193,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Progress bar glow */
 .progress-glow {
-  box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.45);
 }
 
 /* Input focus ring */

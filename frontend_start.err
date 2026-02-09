@@ -1,0 +1,14 @@
+^C^Cnode:internal/process/per_thread:225
+      throw new ErrnoException(err, 'kill');
+      ^
+
+Error: kill ENOSYS
+    at process.kill (node:internal/process/per_thread:225:13)
+    at process.listener (C:\Users\MARLOS\AppData\Local\node\corepack\v1\yarn\1.22.22\lib\cli.js:76945:15)
+    at process.emit (node:events:524:28) {
+  errno: -4054,
+  code: 'ENOSYS',
+  syscall: 'kill'
+}
+
+Node.js v20.20.0

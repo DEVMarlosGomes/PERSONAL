@@ -16,6 +16,9 @@ import AssessmentsPage from "./pages/AssessmentsPage";
 import ExerciseLibraryPage from "./pages/ExerciseLibraryPage";
 import FinancialPage from "./pages/FinancialPage";
 import RoutinesPage from "./pages/RoutinesPage";
+import CheckinsPage from "./pages/CheckinsPage";
+import EvolutionPhotosPage from "./pages/EvolutionPhotosPage";
+import StudentFinancialPage from "./pages/StudentFinancialPage";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -105,6 +108,16 @@ function AppRoutes() {
           <RoutinesPage />
         </ProtectedRoute>
       } />
+      <Route path="/frequencia" element={
+        <ProtectedRoute>
+          <CheckinsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/fotos-evolucao" element={
+        <ProtectedRoute>
+          <EvolutionPhotosPage />
+        </ProtectedRoute>
+      } />
 
       {/* Student Routes */}
       <Route path="/treino" element={
@@ -120,6 +133,11 @@ function AppRoutes() {
       <Route path="/minhas-avaliacoes" element={
         <ProtectedRoute allowedRoles={["student"]}>
           <AssessmentsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/meu-financeiro" element={
+        <ProtectedRoute allowedRoles={["student"]}>
+          <StudentFinancialPage />
         </ProtectedRoute>
       } />
 

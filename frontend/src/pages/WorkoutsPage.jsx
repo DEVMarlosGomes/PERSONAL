@@ -6,6 +6,16 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogBody,
+} from "../components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -23,7 +33,8 @@ import {
   Trash2,
   Eye,
   Image as ImageIcon,
-  Camera
+  Camera,
+  Send
 } from "lucide-react";
 import api from "../lib/api";
 import { toast } from "sonner";
@@ -40,6 +51,9 @@ export default function WorkoutsPage() {
   const [uploading, setUploading] = useState(false);
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [imageUploadDialog, setImageUploadDialog] = useState(null);
+  const [assignDialog, setAssignDialog] = useState(null);
+  const [assignStudent, setAssignStudent] = useState("");
+  const [assigning, setAssigning] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -101,6 +115,8 @@ export default function WorkoutsPage() {
       setUploadedWorkout(response.data);
       toast.success(`Treino "${response.data.name}" processado com sucesso!`);
       loadWorkouts(selectedStudent !== "none" ? selectedStudent : null);
+      setAssignDialog({ id: response.data.id, name: response.data.name });
+      setAssignStudent(selectedStudent !== "none" ? selectedStudent : "");
     } catch (error) {
       const message = error.response?.data?.detail || "Erro ao processar arquivo";
       toast.error(message);
@@ -122,6 +138,26 @@ export default function WorkoutsPage() {
       }
     } catch (error) {
       toast.error("Erro ao remover treino");
+    }
+  };
+
+  const handleAssignWorkout = async () => {
+    if (!assignDialog || !assignStudent) {
+      toast.error("Selecione um aluno");
+      return;
+    }
+
+    setAssigning(true);
+    try {
+      await api.post(`/workouts/${assignDialog.id}/assign?student_id=${assignStudent}`);
+      toast.success("Treino enviado com sucesso!");
+      setAssignDialog(null);
+      setAssignStudent("");
+      loadWorkouts(selectedStudent !== "none" ? selectedStudent : null);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Erro ao enviar treino");
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -278,21 +314,30 @@ export default function WorkoutsPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setSelectedWorkout(selectedWorkout?.id === workout.id ? null : workout)}
-                          data-testid={`view-workout-${workout.id}`}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          {selectedWorkout?.id === workout.id ? "Fechar" : "Ver"}
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteWorkout(workout.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedWorkout(selectedWorkout?.id === workout.id ? null : workout)}
+                        data-testid={`view-workout-${workout.id}`}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        {selectedWorkout?.id === workout.id ? "Fechar" : "Ver"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setAssignDialog({ id: workout.id, name: workout.name }); setAssignStudent(workout.student_id || ""); }}
+                        data-testid={`assign-workout-${workout.id}`}
+                      >
+                        <Send className="w-4 h-4 mr-1" />
+                        Enviar
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeleteWorkout(workout.id)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                           data-testid={`delete-workout-${workout.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -395,6 +440,46 @@ export default function WorkoutsPage() {
               loadWorkouts(selectedStudent !== "none" ? selectedStudent : null);
             }}
           />
+        )}
+
+        {/* Assign Workout Dialog */}
+        {assignDialog && (
+          <Dialog open={!!assignDialog} onOpenChange={() => { setAssignDialog(null); setAssignStudent(""); }}>
+            <DialogContent className="bg-card border-border">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold uppercase">Enviar Treino</DialogTitle>
+                <DialogDescription>
+                  Vincule o treino ao aluno para aparecer no app
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <div className="space-y-2">
+                  <Label>Aluno</Label>
+                  <Select value={assignStudent} onValueChange={setAssignStudent}>
+                    <SelectTrigger className="bg-secondary/50 border-white/10">
+                      <SelectValue placeholder="Selecione o aluno" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {students.map((student) => (
+                        <SelectItem key={student.id} value={student.id}>
+                          {student.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </DialogBody>
+              <DialogFooter>
+                <Button onClick={handleAssignWorkout} disabled={assigning}>
+                  {assigning ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "Enviar"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </MainLayout>

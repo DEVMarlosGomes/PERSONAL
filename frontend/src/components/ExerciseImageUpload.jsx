@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "./ui/dialog";
 import { Upload, Image as ImageIcon, X, Check } from "lucide-react";
 import api from "../lib/api";
@@ -102,6 +103,7 @@ export const ExerciseImageUpload = ({
           </DialogDescription>
         </DialogHeader>
 
+        <DialogBody>
         <div className="space-y-4">
           {/* Preview */}
           <div className="relative aspect-video rounded-lg overflow-hidden bg-secondary/50 border border-border">
@@ -169,6 +171,7 @@ export const ExerciseImageUpload = ({
             </Button>
           </div>
         </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>

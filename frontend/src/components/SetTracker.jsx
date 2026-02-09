@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
-import { ScrollArea } from "./ui/scroll-area";
 import { Progress } from "./ui/progress";
 import { 
   X, 
@@ -24,6 +23,11 @@ export const SetTracker = ({ exercise, workoutId, onClose, onProgressLogged }) =
   const [sets, setSets] = useState([]);
   const [saving, setSaving] = useState(false);
   const [previousData, setPreviousData] = useState(null);
+  const [difficulty, setDifficulty] = useState(3);
+  const [suggestion, setSuggestion] = useState(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+  const [resolvedVideoUrl, setResolvedVideoUrl] = useState("");
+  const [loadingVideo, setLoadingVideo] = useState(false);
   
   // Timer state
   const [timerActive, setTimerActive] = useState(false);
@@ -46,9 +50,12 @@ export const SetTracker = ({ exercise, workoutId, onClose, onProgressLogged }) =
     }));
     setSets(initialSets);
     setTimerDuration(exercise.rest_time || 90);
+    setDifficulty(3);
 
     // Load previous progress
     loadPreviousProgress();
+    loadSuggestion();
+    resolveVideoUrl();
 
     // Cleanup timer on unmount
     return () => {
@@ -111,6 +118,59 @@ export const SetTracker = ({ exercise, workoutId, onClose, onProgressLogged }) =
       }
     } catch (error) {
       console.error("Error loading previous progress:", error);
+    }
+  };
+
+  const loadSuggestion = async () => {
+    if (!exercise?.name || !workoutId) return;
+    setLoadingSuggestion(true);
+    try {
+      const response = await api.get(`/progress/suggestion?exercise_name=${encodeURIComponent(exercise.name)}&workout_id=${workoutId}`);
+      setSuggestion(response.data);
+    } catch (error) {
+      setSuggestion(null);
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  };
+
+  const getEmbedUrl = (url) => {
+    if (!url) return null;
+    try {
+      if (url.includes("youtube.com")) {
+        const videoId = new URL(url).searchParams.get("v");
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+      }
+      if (url.includes("youtu.be")) {
+        const videoId = url.split("/").pop();
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+      }
+      if (url.includes("/embed/")) return url;
+      const match = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]+)/);
+      if (match) return `https://www.youtube.com/embed/${match[1]}`;
+    } catch (e) {
+      const match = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]+)/);
+      if (match) return `https://www.youtube.com/embed/${match[1]}`;
+      return null;
+    }
+    return null;
+  };
+
+  const resolveVideoUrl = async () => {
+    const directUrl = exercise?.video_url || "";
+    if (directUrl && getEmbedUrl(directUrl)) {
+      setResolvedVideoUrl(directUrl);
+      return;
+    }
+    if (!exercise?.name) return;
+    setLoadingVideo(true);
+    try {
+      const response = await api.get(`/exercises/video/${encodeURIComponent(exercise.name)}`);
+      setResolvedVideoUrl(response.data?.video_url || "");
+    } catch (error) {
+      setResolvedVideoUrl("");
+    } finally {
+      setLoadingVideo(false);
     }
   };
 
@@ -182,7 +242,8 @@ export const SetTracker = ({ exercise, workoutId, onClose, onProgressLogged }) =
           set: s.set,
           weight: parseFloat(s.weight) || 0,
           reps: parseInt(s.reps) || 0
-        }))
+        })),
+        difficulty
       });
       
       onProgressLogged();
@@ -194,58 +255,89 @@ export const SetTracker = ({ exercise, workoutId, onClose, onProgressLogged }) =
     }
   };
 
+  const videoUrl = resolvedVideoUrl || exercise.video_url || "";
+  const embedUrl = getEmbedUrl(videoUrl);
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fade-in">
-      <Card className="w-full max-w-lg bg-card border-border sm:rounded-lg rounded-t-3xl max-h-[90vh] flex flex-col animate-slide-up" data-testid="set-tracker-modal">
-        {/* Header with Image */}
-        <div className="relative h-40 overflow-hidden rounded-t-3xl sm:rounded-t-lg">
-          <img
-            src={exercise.image_url || defaultImage}
-            alt={exercise.name}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 exercise-overlay" />
-          
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fade-in p-3 sm:p-6 pointer-events-none">
+      <Card className="w-full max-w-lg bg-card border-border sm:rounded-2xl rounded-t-3xl max-h-[85vh] flex flex-col animate-slide-up overflow-hidden pointer-events-auto" data-testid="set-tracker-modal">
+        {/* Header with Video or Image */}
+        <div className="relative overflow-hidden rounded-t-3xl sm:rounded-t-2xl">
+          <div className={`relative ${embedUrl ? "aspect-video" : "h-40 sm:h-48"}`}>
+            {embedUrl ? (
+              <iframe
+                title={`video-${exercise.name}`}
+                src={embedUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <img
+                src={exercise.image_url || defaultImage}
+                alt={exercise.name}
+                className="w-full h-full object-cover"
+              />
+            )}
+            {!embedUrl && videoUrl && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                <div className="p-3 rounded-full bg-primary/90">
+                  <Play className="w-6 h-6 text-white fill-white" />
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Close Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 rounded-full"
+            className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 rounded-full z-20"
             onClick={onClose}
             data-testid="close-set-tracker"
           >
             <X className="w-5 h-5" />
           </Button>
+        </div>
 
-          {/* Exercise Info Overlay */}
-          <div className="absolute bottom-4 left-4 right-4">
-            <h2 className="text-xl font-black uppercase tracking-tight">{exercise.name}</h2>
-            {exercise.muscle_group && (
-              <p className="text-primary font-semibold text-sm">{exercise.muscle_group}</p>
-            )}
-            <div className="flex items-center gap-3 mt-1">
-              <span className="flex items-center gap-1 text-xs">
-                <Target className="w-3 h-3 text-cyan-400" />
-                {exercise.sets}x {exercise.reps}
-              </span>
-              {exercise.weight && (
-                <span className="text-xs text-muted-foreground">{exercise.weight}</span>
+        {/* Exercise Info */}
+        <div className="px-4 py-3 border-b border-border bg-secondary/20">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-xl font-black uppercase tracking-tight truncate">{exercise.name}</h2>
+              {exercise.muscle_group && (
+                <p className="text-primary font-semibold text-sm">{exercise.muscle_group}</p>
               )}
+              <div className="flex flex-wrap items-center gap-3 mt-1">
+                <span className="flex items-center gap-1 text-xs">
+                  <Target className="w-3 h-3 text-cyan-400" />
+                  {exercise.sets}x {exercise.reps}
+                </span>
+                {exercise.weight && (
+                  <span className="text-xs text-muted-foreground">{exercise.weight}</span>
+                )}
+                {loadingVideo && (
+                  <span className="text-xs text-muted-foreground">Carregando vídeo...</span>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Play Button for Video */}
-          {exercise.video_url && (
-            <a 
-              href={exercise.video_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-3 rounded-full bg-primary/80 hover:bg-primary transition-colors"
-            >
-              <Play className="w-6 h-6 text-white fill-white" />
-            </a>
-          )}
         </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto">
+        {/* Video link fallback */}
+        {videoUrl && !embedUrl && (
+          <div className="px-4 pt-4">
+            <a
+              href={videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary underline"
+            >
+              Abrir vídeo do exercício
+            </a>
+          </div>
+        )}
 
         {/* Rest Timer */}
         <div className="px-4 py-3 border-b border-border bg-secondary/30">
@@ -325,9 +417,48 @@ export const SetTracker = ({ exercise, workoutId, onClose, onProgressLogged }) =
           </div>
         </div>
 
+        {/* Difficulty + Suggestion */}
+        <div className="px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold">Dificuldade</span>
+            <span className="text-xs text-muted-foreground">1 = leve • 5 = muito difícil</span>
+          </div>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((level) => (
+              <Button
+                key={level}
+                type="button"
+                variant={difficulty === level ? "default" : "outline"}
+                size="sm"
+                className="flex-1"
+                onClick={() => setDifficulty(level)}
+                data-testid={`difficulty-${level}`}
+              >
+                {level}
+              </Button>
+            ))}
+          </div>
+
+          <div className="mt-3 p-3 rounded-lg bg-secondary/30 text-sm">
+            {loadingSuggestion ? (
+              <div className="text-muted-foreground">Calculando sugestão de carga...</div>
+            ) : suggestion?.eligible ? (
+              <div>
+                <p className="font-semibold text-green-400">Sugestão de aumento</p>
+                <p className="text-muted-foreground">
+                  Atual: {suggestion.current_max_weight}kg • Sugestão: {suggestion.suggested_weight}kg (+{suggestion.increase}kg)
+                </p>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">
+                {suggestion?.reason || "Sem sugestão de aumento no momento"}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Sets Table */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-3">
+        <div className="p-4 space-y-3">
             {/* Previous Data Hint */}
             {previousData && (
               <div className="p-3 rounded-lg bg-secondary/30 text-sm">
@@ -437,8 +568,8 @@ export const SetTracker = ({ exercise, workoutId, onClose, onProgressLogged }) =
                 </div>
               </div>
             ))}
-          </div>
-        </ScrollArea>
+        </div>
+        </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-border">

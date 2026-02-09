@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { MainLayout } from "../components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -24,10 +25,21 @@ import {
 } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { ClipboardList, Plus, Trash2, Scale, Ruler, Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts";
 import api from "../lib/api";
 import { toast } from "sonner";
 
 export default function AssessmentsPage() {
+  const { user } = useAuth();
+  const isPersonal = user?.role === "personal";
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState("");
   const [assessments, setAssessments] = useState([]);
@@ -35,6 +47,7 @@ export default function AssessmentsPage() {
   const [loading, setLoading] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [metric, setMetric] = useState("weight");
   const [formData, setFormData] = useState({
     assessment_type: "manual",
     date: new Date().toISOString().split("T")[0],
@@ -62,8 +75,12 @@ export default function AssessmentsPage() {
   });
 
   useEffect(() => {
-    loadStudents();
-  }, []);
+    if (isPersonal) {
+      loadStudents();
+    } else if (user?.id) {
+      setSelectedStudent(user.id);
+    }
+  }, [isPersonal, user]);
 
   useEffect(() => {
     if (selectedStudent) {
@@ -195,6 +212,25 @@ export default function AssessmentsPage() {
     return <Minus className="w-4 h-4 text-gray-500" />;
   };
 
+  const chartData = useMemo(() => {
+    return [...assessments]
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .map((a) => ({
+        date: a.date,
+        weight: a.weight,
+        body_fat_percentage: a.body_fat_percentage,
+        waist: a.waist,
+        hip: a.hip
+      }));
+  }, [assessments]);
+
+  const metricLabel = {
+    weight: "Peso (kg)",
+    body_fat_percentage: "% Gordura",
+    waist: "Cintura (cm)",
+    hip: "Quadril (cm)"
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6 animate-fade-in">
@@ -202,41 +238,44 @@ export default function AssessmentsPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase">
-              Avaliações Físicas
+              {isPersonal ? "Avaliações Físicas" : "Minhas Avaliações"}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Registre e acompanhe a evolução dos seus alunos
+              {isPersonal ? "Registre e acompanhe a evolução dos seus alunos" : "Acompanhe sua evolução"}
             </p>
           </div>
 
           <div className="flex gap-3">
-            <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-              <SelectTrigger className="w-[200px] bg-secondary/50 border-white/10">
-                <SelectValue placeholder="Selecione o aluno" />
-              </SelectTrigger>
-              <SelectContent>
-                {students.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isPersonal && (
+              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                <SelectTrigger className="w-[200px] bg-secondary/50 border-white/10">
+                  <SelectValue placeholder="Selecione o aluno" />
+                </SelectTrigger>
+                <SelectContent>
+                  {students.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2" disabled={!selectedStudent}>
-                  <Plus className="w-4 h-4" />
-                  + Avaliação
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold uppercase">Nova Avaliação</DialogTitle>
-                  <DialogDescription>
-                    Registre os dados da avaliação física
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogBody>
-                <form id="assessment-form" onSubmit={handleSubmit} className="space-y-6 py-2">
+            {isPersonal && (
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2" disabled={!selectedStudent}>
+                    <Plus className="w-4 h-4" />
+                    + Avaliação
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold uppercase">Nova Avaliação</DialogTitle>
+                    <DialogDescription>
+                      Registre os dados da avaliação física
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogBody>
+                  <form id="assessment-form" onSubmit={handleSubmit} className="space-y-6 py-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Tipo de Avaliação</Label>
@@ -500,18 +539,19 @@ export default function AssessmentsPage() {
                     />
                   </div>
                 </form>
-                </DialogBody>
-                <DialogFooter>
-                  <Button type="submit" form="assessment-form" disabled={submitting}>
-                    {submitting ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      "Salvar Avaliação"
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  </DialogBody>
+                  <DialogFooter>
+                    <Button type="submit" form="assessment-form" disabled={submitting}>
+                      {submitting ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        "Salvar Avaliação"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 
@@ -538,6 +578,42 @@ export default function AssessmentsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+          </CardContent>
+        </Card>
+        )}
+
+        {/* Evolution Chart */}
+        {selectedStudent && chartData.length > 1 && (
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold uppercase flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Evolução
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                <p className="text-sm text-muted-foreground">Métrica</p>
+                <Tabs value={metric} onValueChange={setMetric}>
+                  <TabsList className="bg-secondary/30">
+                    <TabsTrigger value="weight" className="text-xs">Peso</TabsTrigger>
+                    <TabsTrigger value="body_fat_percentage" className="text-xs">% Gordura</TabsTrigger>
+                    <TabsTrigger value="waist" className="text-xs">Cintura</TabsTrigger>
+                    <TabsTrigger value="hip" className="text-xs">Quadril</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                    <XAxis dataKey="date" stroke="#71717a" tick={{ fill: "#a1a1aa", fontSize: 12 }} />
+                    <YAxis stroke="#71717a" tick={{ fill: "#a1a1aa", fontSize: 12 }} />
+                    <Tooltip formatter={(value) => [value, metricLabel[metric]]} />
+                    <Line type="monotone" dataKey={metric} stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

@@ -16,7 +16,7 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props} />
@@ -29,15 +29,15 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 w-[calc(100%-2rem)] max-w-lg border bg-background shadow-lg sm:rounded-lg",
+        "fixed z-50 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-lg border border-border/60 bg-card/95 shadow-2xl ring-1 ring-white/5 sm:rounded-2xl",
         "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-        "max-h-[calc(100vh-4rem)]",
+        "max-h-[85vh]",
         "flex flex-col",
         "duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         className
       )}
       {...props}>
-      <div className="flex flex-col max-h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="flex flex-col max-h-[85vh] overflow-hidden">
         {children}
       </div>
       <DialogPrimitive.Close
@@ -65,7 +65,7 @@ const DialogBody = ({
   ...props
 }) => (
   <div
-    className={cn("flex-1 overflow-y-auto px-6", className)}
+    className={cn("flex-1 min-h-0 overflow-y-auto px-6 py-4", className)}
     {...props} />
 )
 DialogBody.displayName = "DialogBody"
