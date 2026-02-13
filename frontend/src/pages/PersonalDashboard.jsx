@@ -183,7 +183,7 @@ export default function PersonalDashboard() {
             <CardContent className="p-6">
               <h3 className="text-lg font-bold mb-2">Upload de Planilha</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Envie um arquivo .xlsx com o treino completo do aluno
+                Envie um arquivo .csv, .xls ou .xlsx com o treino completo do aluno
               </p>
               <Link to="/treinos">
                 <Button className="gap-2" data-testid="quick-upload-btn">

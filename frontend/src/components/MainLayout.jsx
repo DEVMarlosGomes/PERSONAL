@@ -34,7 +34,8 @@ import {
   FolderOpen,
   Settings,
   CalendarCheck,
-  Camera
+  Camera,
+  Activity
 } from "lucide-react";
 
 // Links do Personal Trainer para Sidebar
@@ -47,6 +48,7 @@ const personalLinks = [
   { href: "/avaliacoes", label: "Avaliações", icon: ClipboardList },
   { href: "/frequencia", label: "Frequência", icon: CalendarCheck },
   { href: "/fotos-evolucao", label: "Fotos", icon: Camera },
+  { href: "/periodizacao", label: "Periodizacao", icon: Activity },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
   { href: "/conquistas", label: "Ranking", icon: Trophy },
@@ -58,6 +60,7 @@ const studentLinks = [
   { href: "/treino", label: "Meu Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
   { href: "/minhas-avaliacoes", label: "Avaliações", icon: ClipboardList },
+  { href: "/periodizacao", label: "Periodizacao", icon: Activity },
   { href: "/frequencia", label: "Check-in", icon: CalendarCheck },
   { href: "/fotos-evolucao", label: "Fotos", icon: Camera },
   { href: "/meu-financeiro", label: "Mensalidade", icon: DollarSign },
@@ -69,6 +72,7 @@ const studentLinks = [
 const studentMainLinks = [
   { href: "/treino", label: "Treino", icon: Dumbbell },
   { href: "/meu-progresso", label: "Evolução", icon: TrendingUp },
+  { href: "/periodizacao", label: "Periodizacao", icon: Activity },
   { href: "/frequencia", label: "Check-in", icon: CalendarCheck },
   { href: "/meu-financeiro", label: "Mensalidade", icon: DollarSign },
   { href: "/chat", label: "Chat", icon: MessageCircle },

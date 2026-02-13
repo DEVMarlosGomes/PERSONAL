@@ -18,6 +18,7 @@ from io import BytesIO
 import base64
 import shutil
 import re
+import unicodedata
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -139,7 +140,7 @@ def get_exercise_image(exercise_name: str) -> Optional[str]:
             return url
     return None
 
-def get_exercise_video(exercise_name: str) -> Optional[str]:
+def resolve_exercise_video_url(exercise_name: str) -> Optional[str]:
     name_lower = exercise_name.lower().strip()
     if name_lower in EXERCISE_VIDEOS:
         return normalize_youtube_url(EXERCISE_VIDEOS[name_lower])
@@ -400,6 +401,7 @@ class WorkoutResponse(BaseModel):
 class ProgressLog(BaseModel):
     workout_id: str
     exercise_name: str
+    day_name: Optional[str] = None
     sets_completed: List[dict]
     notes: Optional[str] = None
     difficulty: Optional[int] = None  # 1-5 scale
@@ -409,6 +411,7 @@ class ProgressResponse(BaseModel):
     student_id: str
     workout_id: str
     exercise_name: str
+    day_name: Optional[str] = None
     sets_completed: List[dict]
     notes: Optional[str] = None
     difficulty: Optional[int] = None
@@ -421,6 +424,9 @@ class WorkoutSessionCreate(BaseModel):
     day_name: Optional[str] = None
     notes: Optional[str] = None
     difficulty: Optional[int] = None  # 1-5 scale
+    feedback: Optional[str] = None
+    recovery_score: Optional[int] = Field(default=None, ge=1, le=10)
+    effort_score: Optional[int] = Field(default=None, ge=1, le=10)
 
 class WorkoutSessionResponse(BaseModel):
     id: str
@@ -429,6 +435,14 @@ class WorkoutSessionResponse(BaseModel):
     day_name: Optional[str] = None
     notes: Optional[str] = None
     difficulty: Optional[int] = None
+    feedback: Optional[str] = None
+    recovery_score: Optional[int] = None
+    effort_score: Optional[int] = None
+    total_volume_kg: float = 0.0
+    total_reps: int = 0
+    total_sets: int = 0
+    exercises_completed: int = 0
+    estimated_calories: int = 0
     completed_at: str
 
 # ==================== CHECK-IN MODELS ====================
@@ -1376,6 +1390,72 @@ async def delete_evolution_photo(photo_id: str, personal: dict = Depends(get_per
 
 # ==================== WORKOUT MANAGEMENT ====================
 
+def normalize_sheet_column(name: str) -> str:
+    text = str(name or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+def clean_sheet_value(value: Any) -> str:
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except TypeError:
+        pass
+    text = str(value).strip()
+    if text.lower() == "nan":
+        return ""
+    return text
+
+def parse_rest_time_seconds(interval_value: Any, default_seconds: int = 90) -> int:
+    text = clean_sheet_value(interval_value).lower()
+    if not text:
+        return default_seconds
+
+    normalized = (
+        text.replace("–", "-")
+        .replace("—", "-")
+        .replace("−", "-")
+        .replace("\x96", "-")
+        .replace(",", ".")
+    )
+
+    matches = re.findall(r"\d+(?:\.\d+)?", normalized)
+    if not matches:
+        return default_seconds
+
+    values = [float(v) for v in matches]
+    base_value = values[0] if len(values) == 1 else (values[0] + values[1]) / 2
+
+    is_minutes = any(token in normalized for token in ["min", "mins", "minute"])
+    if not is_minutes and re.search(r"\d+\s*m\b", normalized):
+        is_minutes = True
+    if not is_minutes and "s" not in normalized and base_value <= 10:
+        is_minutes = True
+
+    seconds = int(round(base_value * 60)) if is_minutes else int(round(base_value))
+    return seconds if seconds > 0 else default_seconds
+
+def to_int_or_default(value: Any, default: int = 3) -> int:
+    text = clean_sheet_value(value).replace(",", ".")
+    if not text:
+        return default
+    try:
+        parsed = int(float(text))
+        return parsed if parsed > 0 else default
+    except (TypeError, ValueError):
+        return default
+
+def resolve_sheet_column(normalized_columns: Dict[str, str], aliases: List[str]) -> Optional[str]:
+    for alias in aliases:
+        alias_key = normalize_sheet_column(alias)
+        if alias_key in normalized_columns:
+            return normalized_columns[alias_key]
+    return None
+
 @api_router.post("/workouts/upload")
 async def upload_workout(
     file: UploadFile = File(...),
@@ -1383,8 +1463,10 @@ async def upload_workout(
     routine_id: Optional[str] = None,
     personal: dict = Depends(get_personal_user)
 ):
-    if not file.filename.endswith(('.xls', '.xlsx')):
-        raise HTTPException(status_code=400, detail="Apenas arquivos .xls ou .xlsx são aceitos")
+    filename = file.filename or "treino"
+    filename_lower = filename.lower()
+    if not filename_lower.endswith((".csv", ".xls", ".xlsx")):
+        raise HTTPException(status_code=400, detail="Apenas arquivos .csv, .xls ou .xlsx são aceitos")
     
     if student_id:
         student = await db.users.find_one({"id": student_id, "personal_id": personal["id"]})
@@ -1393,52 +1475,116 @@ async def upload_workout(
     
     try:
         content = await file.read()
-        df = pd.read_excel(BytesIO(content))
-        
-        required_cols = ['Dia', 'Exercício', 'Séries', 'Repetições']
-        df.columns = df.columns.str.strip()
-        
-        missing = [col for col in required_cols if col not in df.columns]
-        if missing:
+        if filename_lower.endswith(".csv"):
+            try:
+                df = pd.read_csv(BytesIO(content), sep=None, engine="python", encoding="utf-8-sig")
+            except UnicodeDecodeError:
+                try:
+                    df = pd.read_csv(BytesIO(content), sep=None, engine="python", encoding="cp1252")
+                except UnicodeDecodeError:
+                    df = pd.read_csv(BytesIO(content), sep=None, engine="python", encoding="latin-1")
+        else:
+            df = pd.read_excel(BytesIO(content))
+
+        df.columns = [clean_sheet_value(col) for col in df.columns]
+        normalized_columns: Dict[str, str] = {}
+        for col in df.columns:
+            key = normalize_sheet_column(col)
+            if key and key not in normalized_columns:
+                normalized_columns[key] = col
+
+        day_col = resolve_sheet_column(normalized_columns, ["TREINO", "Dia"])
+        exercise_col = resolve_sheet_column(normalized_columns, ["EXERCÍCIO", "Exercicio"])
+        reps_col = resolve_sheet_column(normalized_columns, ["REPETIÇÕES", "Repeticoes", "Reps"])
+
+        missing_required = []
+        if not day_col:
+            missing_required.append("TREINO")
+        if not exercise_col:
+            missing_required.append("EXERCÍCIO")
+        if not reps_col:
+            missing_required.append("REPETIÇÕES")
+
+        if missing_required:
+            found_columns = ", ".join(df.columns.tolist()) or "(nenhuma coluna)"
             raise HTTPException(
-                status_code=400, 
-                detail=f"Colunas obrigatórias não encontradas: {', '.join(missing)}. Colunas encontradas: {', '.join(df.columns.tolist())}"
+                status_code=400,
+                detail=(
+                    f"Colunas obrigatórias não encontradas: {', '.join(missing_required)}. "
+                    f"Colunas encontradas: {found_columns}"
+                )
             )
-        
-        days = []
-        for day_name in df['Dia'].unique():
-            if pd.isna(day_name):
+
+        muscle_col = resolve_sheet_column(normalized_columns, ["GRUPO MUSCULAR", "Grupo Muscular"])
+        sets_col = resolve_sheet_column(normalized_columns, ["SÉRIES", "Series"])
+        weight_col = resolve_sheet_column(normalized_columns, ["CARGA (ALUNO)", "Carga Aluno", "CARGA"])
+        interval_col = resolve_sheet_column(normalized_columns, ["INTERVALO", "Descanso"])
+        notes_col = resolve_sheet_column(normalized_columns, ["OBSERVAÇÃO", "OBSERVAÇÕES", "Observacao", "Observacoes"])
+        method_col = resolve_sheet_column(normalized_columns, ["MÉTODO", "Metodo"])
+        video_col = resolve_sheet_column(normalized_columns, ["VÍDEO", "VIDEO", "Link Vídeo", "Link Video"])
+        description_col = resolve_sheet_column(normalized_columns, ["DESCRIÇÃO", "Descricao"])
+
+        days_map: Dict[str, List[Dict[str, Any]]] = {}
+        for _, row in df.iterrows():
+            day_name = clean_sheet_value(row.get(day_col))
+            exercise_name = clean_sheet_value(row.get(exercise_col))
+
+            # Ignore spacing/placeholder rows from spreadsheet templates.
+            if not day_name or not exercise_name:
                 continue
-            day_df = df[df['Dia'] == day_name]
-            exercises = []
-            
-            for _, row in day_df.iterrows():
-                exercise_name = str(row.get('Exercício', '')).strip()
-                exercise = {
-                    "name": exercise_name,
-                    "muscle_group": str(row.get('Grupo Muscular', '')).strip() if pd.notna(row.get('Grupo Muscular')) else '',
-                    "sets": int(row.get('Séries', 3)) if pd.notna(row.get('Séries')) else 3,
-                    "reps": str(row.get('Repetições', '10')).strip(),
-                    "weight": str(row.get('Carga', '')).strip() if pd.notna(row.get('Carga')) else None,
-                    "notes": str(row.get('Observações', '')).strip() if pd.notna(row.get('Observações')) else None,
-                    "image_url": get_exercise_image(exercise_name),
-                    "video_url": get_exercise_video(exercise_name),
-                    "description": str(row.get('Descrição', '')).strip() if pd.notna(row.get('Descrição')) else None,
-                    "rest_time": 90
-                }
-                exercises.append(exercise)
-            
-            days.append({
-                "day_name": str(day_name).strip(),
-                "exercises": exercises
-            })
+
+            reps_value = clean_sheet_value(row.get(reps_col)) or "10-12"
+            interval_value = clean_sheet_value(row.get(interval_col)) if interval_col else ""
+            method_value = clean_sheet_value(row.get(method_col)) if method_col else ""
+            notes_value = clean_sheet_value(row.get(notes_col)) if notes_col else ""
+            description_value = clean_sheet_value(row.get(description_col)) if description_col else ""
+            video_value = clean_sheet_value(row.get(video_col)) if video_col else ""
+
+            description_parts = []
+            if description_value:
+                description_parts.append(description_value)
+            if method_value:
+                description_parts.append(f"Método: {method_value}")
+            if interval_value:
+                description_parts.append(f"Intervalo: {interval_value}")
+            merged_description = " | ".join(description_parts) if description_parts else None
+
+            exercise = {
+                "name": exercise_name,
+                "muscle_group": clean_sheet_value(row.get(muscle_col)) if muscle_col else "",
+                "sets": to_int_or_default(row.get(sets_col), 3) if sets_col else 3,
+                "reps": reps_value,
+                "weight": clean_sheet_value(row.get(weight_col)) if weight_col else None,
+                "notes": notes_value or None,
+                "image_url": get_exercise_image(exercise_name),
+                "video_url": video_value or resolve_exercise_video_url(exercise_name),
+                "description": merged_description,
+                "rest_time": parse_rest_time_seconds(interval_value, default_seconds=90),
+            }
+
+            if not exercise["weight"]:
+                exercise["weight"] = None
+
+            days_map.setdefault(day_name, []).append(exercise)
+
+        days = [
+            {"day_name": day_name, "exercises": exercises}
+            for day_name, exercises in days_map.items()
+            if exercises
+        ]
+
+        if not days:
+            raise HTTPException(
+                status_code=400,
+                detail="Nenhum exercício válido encontrado. Verifique se TREINO e EXERCÍCIO estão preenchidos."
+            )
         
         workout_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
         
         workout_doc = {
             "id": workout_id,
-            "name": file.filename.rsplit('.', 1)[0],
+            "name": filename.rsplit('.', 1)[0],
             "student_id": student_id,
             "personal_id": personal["id"],
             "routine_id": routine_id,
@@ -1481,6 +1627,8 @@ async def upload_workout(
             "days": days
         }
         
+    except HTTPException:
+        raise
     except pd.errors.EmptyDataError:
         raise HTTPException(status_code=400, detail="Arquivo vazio ou inválido")
     except Exception as e:
@@ -1716,6 +1864,7 @@ async def log_progress(progress: ProgressLog, current_user: dict = Depends(get_c
         "student_id": current_user["id"],
         "workout_id": progress.workout_id,
         "exercise_name": progress.exercise_name,
+        "day_name": progress.day_name,
         "sets_completed": progress.sets_completed,
         "notes": progress.notes,
         "difficulty": progress.difficulty,
@@ -1729,6 +1878,7 @@ async def log_progress(progress: ProgressLog, current_user: dict = Depends(get_c
         student_id=current_user["id"],
         workout_id=progress.workout_id,
         exercise_name=progress.exercise_name,
+        day_name=progress.day_name,
         sets_completed=progress.sets_completed,
         notes=progress.notes,
         difficulty=progress.difficulty,
@@ -1762,6 +1912,7 @@ async def get_progress(
         student_id=p["student_id"],
         workout_id=p["workout_id"],
         exercise_name=p["exercise_name"],
+        day_name=p.get("day_name"),
         sets_completed=p["sets_completed"],
         notes=p.get("notes"),
         difficulty=p.get("difficulty"),
@@ -1890,6 +2041,67 @@ async def create_workout_session(
     if not workout:
         raise HTTPException(status_code=404, detail="Treino não encontrado")
 
+    # Build metrics from progress logged since the previous completed session
+    # for this workout/day.
+    last_session_query: Dict[str, Any] = {
+        "student_id": current_user["id"],
+        "workout_id": session.workout_id
+    }
+    if session.day_name:
+        last_session_query["day_name"] = session.day_name
+
+    previous_sessions = await db.workout_sessions.find(
+        last_session_query,
+        {"_id": 0, "completed_at": 1}
+    ).sort("completed_at", -1).to_list(1)
+
+    previous_completed_at = previous_sessions[0]["completed_at"] if previous_sessions else None
+
+    progress_query: Dict[str, Any] = {
+        "student_id": current_user["id"],
+        "workout_id": session.workout_id
+    }
+    if session.day_name:
+        progress_query["day_name"] = session.day_name
+    if previous_completed_at:
+        progress_query["logged_at"] = {"$gt": previous_completed_at}
+
+    progress_entries = await db.progress.find(
+        progress_query,
+        {"_id": 0, "exercise_name": 1, "sets_completed": 1}
+    ).to_list(2000)
+
+    total_volume_kg = 0.0
+    total_reps = 0
+    total_sets = 0
+    exercises_completed = set()
+
+    for entry in progress_entries:
+        sets = entry.get("sets_completed", []) or []
+        valid_sets_for_exercise = 0
+
+        for s in sets:
+            weight = float(s.get("weight", 0) or 0)
+            reps = int(s.get("reps", 0) or 0)
+
+            if weight < 0:
+                weight = 0
+            if reps < 0:
+                reps = 0
+
+            total_volume_kg += weight * reps
+            total_reps += reps
+
+            if weight > 0 or reps > 0:
+                total_sets += 1
+                valid_sets_for_exercise += 1
+
+        if valid_sets_for_exercise > 0 and entry.get("exercise_name"):
+            exercises_completed.add(entry["exercise_name"])
+
+    total_volume_kg = round(total_volume_kg, 2)
+    estimated_calories = int(round(total_volume_kg * 0.045))
+
     session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     session_doc = {
@@ -1899,6 +2111,14 @@ async def create_workout_session(
         "day_name": session.day_name,
         "notes": session.notes,
         "difficulty": session.difficulty,
+        "feedback": session.feedback,
+        "recovery_score": session.recovery_score,
+        "effort_score": session.effort_score,
+        "total_volume_kg": total_volume_kg,
+        "total_reps": total_reps,
+        "total_sets": total_sets,
+        "exercises_completed": len(exercises_completed),
+        "estimated_calories": estimated_calories,
         "completed_at": now
     }
 
@@ -2177,8 +2397,8 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
 # ==================== EXERCISE VIDEOS ====================
 
 @api_router.get("/exercises/video/{exercise_name}")
-async def get_exercise_video(exercise_name: str):
-    return {"video_url": get_exercise_video(exercise_name)}
+async def get_exercise_video_endpoint(exercise_name: str):
+    return {"video_url": resolve_exercise_video_url(exercise_name)}
 
 @api_router.get("/exercises/search")
 async def search_exercises(q: str, current_user: dict = Depends(get_current_user)):

@@ -19,6 +19,7 @@ import RoutinesPage from "./pages/RoutinesPage";
 import CheckinsPage from "./pages/CheckinsPage";
 import EvolutionPhotosPage from "./pages/EvolutionPhotosPage";
 import StudentFinancialPage from "./pages/StudentFinancialPage";
+import PeriodizationPage from "./pages/PeriodizationPage";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -138,6 +139,11 @@ function AppRoutes() {
       <Route path="/meu-financeiro" element={
         <ProtectedRoute allowedRoles={["student"]}>
           <StudentFinancialPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/periodizacao" element={
+        <ProtectedRoute>
+          <PeriodizationPage />
         </ProtectedRoute>
       } />
 

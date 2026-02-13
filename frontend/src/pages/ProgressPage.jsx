@@ -37,6 +37,7 @@ export default function ProgressPage() {
   const [selectedExercise, setSelectedExercise] = useState("");
   const [evolutionData, setEvolutionData] = useState([]);
   const [progressHistory, setProgressHistory] = useState([]);
+  const [sessionHistory, setSessionHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartType, setChartType] = useState("weight");
 
@@ -76,13 +77,15 @@ export default function ProgressPage() {
 
   const loadStudentData = async () => {
     try {
-      const [workoutsRes, progressRes] = await Promise.all([
+      const [workoutsRes, progressRes, sessionsRes] = await Promise.all([
         api.get("/workouts"),
-        api.get("/progress")
+        api.get("/progress"),
+        api.get("/workout-sessions"),
       ]);
       
       setWorkouts(workoutsRes.data);
       setProgressHistory(progressRes.data);
+      setSessionHistory(sessionsRes.data);
       
       // Extract unique exercises
       const allExercises = new Set();
@@ -107,6 +110,7 @@ export default function ProgressPage() {
     try {
       const response = await api.get(`/workouts?student_id=${studentId}`);
       setWorkouts(response.data);
+      loadSessionHistory(studentId);
       
       const allExercises = new Set();
       response.data.forEach(w => {
@@ -121,6 +125,26 @@ export default function ProgressPage() {
       }
     } catch (error) {
       console.error("Error loading workouts:", error);
+    }
+  };
+
+  const loadSessionHistory = async (studentId = null) => {
+    try {
+      if (isPersonal) {
+        if (!studentId) {
+          setSessionHistory([]);
+          return;
+        }
+        const response = await api.get(`/workout-sessions?student_id=${studentId}`);
+        setSessionHistory(response.data);
+        return;
+      }
+
+      const response = await api.get("/workout-sessions");
+      setSessionHistory(response.data);
+    } catch (error) {
+      console.error("Error loading sessions:", error);
+      setSessionHistory([]);
     }
   };
 
@@ -282,6 +306,65 @@ export default function ProgressPage() {
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Workout Session History (Student + Personal) */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold uppercase flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-cyan-400" />
+              {isPersonal ? "Historico do Aluno" : "Historico de Sessoes"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sessionHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma sessao concluida encontrada.</p>
+            ) : (
+              <div className="space-y-3">
+                {sessionHistory.slice(0, 12).map((session) => (
+                  <div key={session.id} className="p-4 rounded-lg bg-secondary/30 border border-border/50">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                      <div>
+                        <p className="font-semibold">{session.day_name || "Treino"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(session.completed_at).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-sm">
+                        <p>
+                          <span className="text-muted-foreground">Volume:</span>{" "}
+                          <span className="font-semibold">
+                            {Number(session.total_volume_kg || 0).toLocaleString("pt-BR", {
+                              maximumFractionDigits: 1,
+                            })}{" "}
+                            kg
+                          </span>
+                        </p>
+                        <p className="text-muted-foreground">
+                          Exercicios: {session.exercises_completed || 0} | Reps: {session.total_reps || 0}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      PSR {session.recovery_score || "-"} | PSE {session.effort_score || "-"} | Sensacao:{" "}
+                      <span className="capitalize">{session.feedback || "-"}</span> | Kcal:{" "}
+                      <span className="font-medium">{session.estimated_calories || 0}</span>
+                    </div>
+                    {session.notes && (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Obs.: {session.notes}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

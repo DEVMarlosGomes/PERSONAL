@@ -96,8 +96,10 @@ export default function WorkoutsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.xls') && !file.name.endsWith('.xlsx')) {
-      toast.error("Apenas arquivos .xls ou .xlsx são aceitos");
+    const fileName = file.name.toLowerCase();
+    const acceptedExtensions = [".csv", ".xls", ".xlsx"];
+    if (!acceptedExtensions.some((ext) => fileName.endsWith(ext))) {
+      toast.error("Apenas arquivos .csv, .xls ou .xlsx são aceitos");
       return;
     }
 
@@ -209,12 +211,12 @@ export default function WorkoutsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Arquivo (.xls / .xlsx)</Label>
+                <Label>Arquivo (.csv / .xls / .xlsx)</Label>
                 <div className="flex gap-2">
                   <Input
                     ref={fileInputRef}
                     type="file"
-                    accept=".xls,.xlsx"
+                    accept=".csv,.xls,.xlsx,text/csv"
                     onChange={handleFileUpload}
                     className="bg-secondary/50 border-white/10"
                     disabled={uploading}
@@ -262,10 +264,10 @@ export default function WorkoutsPage() {
                 Formato da Planilha
               </h4>
               <p className="text-sm text-muted-foreground mb-2">
-                A planilha deve conter as seguintes colunas:
+                Obrigatórias: TREINO, EXERCÍCIO e REPETIÇÕES. O aluno preenche principalmente CARGA (ALUNO), REPETIÇÕES, INTERVALO e OBSERVAÇÃO.
               </p>
               <div className="flex flex-wrap gap-2">
-                {["Dia", "Grupo Muscular", "Exercício", "Séries", "Repetições", "Carga", "Observações"].map((col) => (
+                {["TREINO", "GRUPO MUSCULAR", "EXERCÍCIO", "VÍDEO", "MÉTODO", "REPETIÇÕES", "CARGA (ALUNO)", "INTERVALO", "OBSERVAÇÃO"].map((col) => (
                   <span key={col} className="px-2 py-1 rounded bg-secondary text-xs font-mono">
                     {col}
                   </span>
