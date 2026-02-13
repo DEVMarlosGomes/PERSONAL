@@ -20,6 +20,14 @@ import CheckinsPage from "./pages/CheckinsPage";
 import EvolutionPhotosPage from "./pages/EvolutionPhotosPage";
 import StudentFinancialPage from "./pages/StudentFinancialPage";
 import PeriodizationPage from "./pages/PeriodizationPage";
+import AdminApprovalsPage from "./pages/AdminApprovalsPage";
+
+const getHomeRouteByRole = (role) => {
+  if (role === "personal") return "/dashboard";
+  if (role === "student") return "/treino";
+  if (role === "administrador") return "/admin/aprovacoes";
+  return "/login";
+};
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -37,7 +45,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to={user.role === "personal" ? "/dashboard" : "/treino"} replace />;
+    return <Navigate to={getHomeRouteByRole(user.role)} replace />;
   }
 
   return children;
@@ -55,7 +63,7 @@ const PublicRoute = ({ children }) => {
   }
 
   if (user) {
-    return <Navigate to={user.role === "personal" ? "/dashboard" : "/treino"} replace />;
+    return <Navigate to={getHomeRouteByRole(user.role)} replace />;
   }
 
   return children;
@@ -144,6 +152,13 @@ function AppRoutes() {
       <Route path="/periodizacao" element={
         <ProtectedRoute>
           <PeriodizationPage />
+        </ProtectedRoute>
+      } />
+
+      {/* Admin Routes */}
+      <Route path="/admin/aprovacoes" element={
+        <ProtectedRoute allowedRoles={["administrador"]}>
+          <AdminApprovalsPage />
         </ProtectedRoute>
       } />
 

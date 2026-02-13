@@ -32,6 +32,9 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'personal-trainer-secret-key-2024')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
+MASTER_ADMIN_EMAIL = os.environ.get("MASTER_ADMIN_EMAIL", "Personal@admin.com")
+MASTER_ADMIN_PASSWORD = os.environ.get("MASTER_ADMIN_PASSWORD", "admin123")
+MASTER_ADMIN_NAME = os.environ.get("MASTER_ADMIN_NAME", "administrador")
 
 # Upload directory for exercise images
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -204,11 +207,19 @@ class UserResponse(BaseModel):
     medical_restrictions: Optional[str] = None
     emergency_contact: Optional[str] = None
     address: Optional[str] = None
+    is_approved: Optional[bool] = None
+    approved_at: Optional[str] = None
+    approved_by: Optional[str] = None
     created_at: str
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    user: UserResponse
+
+class RegisterResponse(BaseModel):
+    message: str
+    pending_approval: bool = True
     user: UserResponse
 
 # ==================== PHYSICAL ASSESSMENT MODELS ====================
@@ -508,6 +519,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user = await db.users.find_one({"id": user_id}, {"_id": 0})
         if not user:
             raise HTTPException(status_code=401, detail="Usuário não encontrado")
+        if user.get("role") == "personal" and user.get("is_approved", True) is not True:
+            raise HTTPException(status_code=403, detail="Conta de personal aguardando aprovacao do administrador")
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
@@ -519,11 +532,24 @@ async def get_personal_user(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Acesso restrito a personal trainers")
     return current_user
 
+async def get_admin_user(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "administrador":
+        raise HTTPException(status_code=403, detail="Acesso restrito ao administrador")
+    return current_user
+
+async def find_user_by_email(email: str, projection: Optional[Dict[str, int]] = None):
+    escaped_email = re.escape((email or "").strip())
+    query = {"email": {"$regex": f"^{escaped_email}$", "$options": "i"}}
+    return await db.users.find_one(query, projection)
+
 # ==================== AUTH ROUTES ====================
 
-@api_router.post("/auth/register", response_model=TokenResponse)
+@api_router.post("/auth/register", response_model=RegisterResponse)
 async def register(user: UserCreate):
-    existing = await db.users.find_one({"email": user.email})
+    if user.email.lower() == MASTER_ADMIN_EMAIL.lower():
+        raise HTTPException(status_code=400, detail="Este email e reservado ao administrador")
+
+    existing = await find_user_by_email(user.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
     
@@ -536,28 +562,46 @@ async def register(user: UserCreate):
         "name": user.name,
         "password": hash_password(user.password),
         "role": "personal",
+        "is_approved": False,
+        "approved_at": None,
+        "approved_by": None,
         "created_at": now
     }
     
     await db.users.insert_one(user_doc)
     
-    token = create_token(user_id, "personal")
-    return TokenResponse(
-        access_token=token,
+    admin_user = await db.users.find_one({"role": "administrador"}, {"_id": 0, "id": 1})
+    if admin_user:
+        await db.notifications.insert_one({
+            "id": str(uuid.uuid4()),
+            "user_id": admin_user["id"],
+            "title": "Novo personal pendente",
+            "message": f"Personal '{user.name}' aguardando aprovacao.",
+            "type": "info",
+            "read": False,
+            "created_at": now
+        })
+
+    return RegisterResponse(
+        message="Cadastro enviado. Aguarde aprovacao do administrador para acessar o sistema.",
+        pending_approval=True,
         user=UserResponse(
             id=user_id,
             email=user.email,
             name=user.name,
             role="personal",
+            is_approved=False,
             created_at=now
         )
     )
 
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
-    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    user = await find_user_by_email(credentials.email, {"_id": 0})
     if not user or not verify_password(credentials.password, user["password"]):
         raise HTTPException(status_code=401, detail="Email ou senha incorretos")
+    if user.get("role") == "personal" and user.get("is_approved", True) is not True:
+        raise HTTPException(status_code=403, detail="Conta de personal aguardando aprovacao do administrador")
     
     token = create_token(user["id"], user["role"])
     return TokenResponse(
@@ -574,6 +618,9 @@ async def login(credentials: UserLogin):
             gender=user.get("gender"),
             objective=user.get("objective"),
             medical_restrictions=user.get("medical_restrictions"),
+            is_approved=user.get("is_approved"),
+            approved_at=user.get("approved_at"),
+            approved_by=user.get("approved_by"),
             created_at=user["created_at"]
         )
     )
@@ -592,14 +639,80 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         gender=current_user.get("gender"),
         objective=current_user.get("objective"),
         medical_restrictions=current_user.get("medical_restrictions"),
+        is_approved=current_user.get("is_approved"),
+        approved_at=current_user.get("approved_at"),
+        approved_by=current_user.get("approved_by"),
         created_at=current_user["created_at"]
+    )
+
+# ==================== ADMIN APPROVAL ROUTES ====================
+
+@api_router.get("/admin/personals/pending", response_model=List[UserResponse])
+async def list_pending_personals(admin: dict = Depends(get_admin_user)):
+    pending_personals = await db.users.find(
+        {"role": "personal", "is_approved": False},
+        {"_id": 0, "password": 0}
+    ).sort("created_at", 1).to_list(500)
+
+    return [UserResponse(
+        id=p["id"],
+        email=p["email"],
+        name=p["name"],
+        role=p["role"],
+        is_approved=p.get("is_approved"),
+        approved_at=p.get("approved_at"),
+        approved_by=p.get("approved_by"),
+        created_at=p["created_at"]
+    ) for p in pending_personals]
+
+@api_router.post("/admin/personals/{personal_id}/approve", response_model=UserResponse)
+async def approve_personal_account(personal_id: str, admin: dict = Depends(get_admin_user)):
+    personal = await db.users.find_one({"id": personal_id, "role": "personal"}, {"_id": 0})
+    if not personal:
+        raise HTTPException(status_code=404, detail="Personal nao encontrado")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": personal_id},
+        {"$set": {"is_approved": True, "approved_at": now, "approved_by": admin["id"]}}
+    )
+
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": personal_id,
+        "title": "Conta aprovada",
+        "message": "Seu acesso de personal foi aprovado pelo administrador.",
+        "type": "info",
+        "read": False,
+        "created_at": now
+    })
+
+    updated = await db.users.find_one({"id": personal_id}, {"_id": 0, "password": 0})
+    return UserResponse(
+        id=updated["id"],
+        email=updated["email"],
+        name=updated["name"],
+        role=updated["role"],
+        personal_id=updated.get("personal_id"),
+        phone=updated.get("phone"),
+        notes=updated.get("notes"),
+        birth_date=updated.get("birth_date"),
+        gender=updated.get("gender"),
+        objective=updated.get("objective"),
+        medical_restrictions=updated.get("medical_restrictions"),
+        emergency_contact=updated.get("emergency_contact"),
+        address=updated.get("address"),
+        is_approved=updated.get("is_approved"),
+        approved_at=updated.get("approved_at"),
+        approved_by=updated.get("approved_by"),
+        created_at=updated["created_at"]
     )
 
 # ==================== STUDENT MANAGEMENT ====================
 
 @api_router.post("/students", response_model=UserResponse)
 async def create_student(student: StudentCreate, personal: dict = Depends(get_personal_user)):
-    existing = await db.users.find_one({"email": student.email})
+    existing = await find_user_by_email(student.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
     
@@ -2657,6 +2770,36 @@ async def get_student_gamification(student_id: str, personal: dict = Depends(get
 async def root():
     return {"message": "Personal Trainer API v2.0"}
 
+async def ensure_master_admin_user():
+    now = datetime.now(timezone.utc).isoformat()
+    admin_user = await find_user_by_email(MASTER_ADMIN_EMAIL, {"_id": 0})
+
+    if admin_user and admin_user.get("role") != "administrador":
+        logger.warning("Email do administrador em uso por outro perfil: %s", MASTER_ADMIN_EMAIL)
+        return
+
+    admin_doc = {
+        "id": admin_user["id"] if admin_user else str(uuid.uuid4()),
+        "email": MASTER_ADMIN_EMAIL,
+        "name": MASTER_ADMIN_NAME,
+        "password": hash_password(MASTER_ADMIN_PASSWORD),
+        "role": "administrador",
+        "is_approved": True,
+        "approved_at": now,
+        "approved_by": None,
+        "created_at": admin_user.get("created_at", now) if admin_user else now,
+    }
+
+    if admin_user:
+        await db.users.update_one(
+            {"id": admin_user["id"]},
+            {"$set": admin_doc}
+        )
+        logger.info("Conta administrador atualizada: %s", MASTER_ADMIN_EMAIL)
+    else:
+        await db.users.insert_one(admin_doc)
+        logger.info("Conta administrador criada: %s", MASTER_ADMIN_EMAIL)
+
 # Include router and add CORS
 app.include_router(api_router)
 
@@ -2667,6 +2810,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+async def startup_initialize():
+    await ensure_master_admin_user()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

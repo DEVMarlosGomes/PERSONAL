@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,8 +38,9 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const user = await register(name, email, password);
-      toast.success(`Bem-vindo, ${user.name}! Sua conta foi criada.`);
+      const response = await register(name, email, password);
+      toast.success(response.message || "Cadastro enviado para aprovacao do administrador");
+      navigate("/login", { replace: true });
     } catch (error) {
       const message = error.response?.data?.detail || "Erro ao criar conta";
       toast.error(message);
